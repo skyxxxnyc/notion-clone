@@ -1,0 +1,26 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Redirect all routes to Next.js
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/___netlify-handler"
+  status = 200
+  force = true
+  conditions = {Role = ["admin", "editor"]}
+
+# Headers for security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"

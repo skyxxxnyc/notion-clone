@@ -1,36 +1,135 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Notion Clone
+
+A full-featured Notion clone built with Next.js 14, TypeScript, and Tailwind CSS.
+
+## Features
+
+### Core Features
+- **Block-based Editor** - Rich text editing with slash commands (Tiptap)
+- **Page Hierarchy** - Nested pages with infinite depth
+- **Sidebar Navigation** - Collapsible, resizable sidebar with page tree
+- **Quick Search** - Cmd/Ctrl+K to search pages
+- **Favourites** - Star pages for quick access
+- **Page Icons & Covers** - Emoji icons and cover images
+
+### Editor Capabilities
+- Headings (H1, H2, H3)
+- Bullet and numbered lists
+- To-do lists with checkboxes
+- Blockquotes
+- Code blocks with syntax highlighting
+- Image embeds
+- Links
+- Text formatting (bold, italic, underline, strikethrough, highlight)
+- Text alignment
+
+### Database Views
+- **Table View** - Spreadsheet-like data editing
+- **Board View** - Kanban-style task management
+- **Calendar View** - Monthly calendar with events
+- **Gallery View** - Card-based visual layout
+- **List View** - Compact list display
+
+### Other Features
+- Local storage persistence (Supabase-ready)
+- Workspace management
+- Settings panel
+- Authentication UI (ready for Supabase Auth)
+
+## Tech Stack
+
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Editor**: Tiptap
+- **State Management**: Zustand
+- **UI Components**: Radix UI
+- **Icons**: Lucide React
+- **Date Handling**: date-fns
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+
+### Installation
 
 ```bash
+# Clone the repository
+cd ~/projects/notion-clone
+
+# Install dependencies
+npm install
+
+# Start the development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Netlify
 
-## Learn More
+This project is configured for Netlify deployment:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Install Netlify CLI
+npm install -g netlify-cli
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Deploy
+netlify deploy --prod
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Or connect your GitHub repository to Netlify for automatic deployments.
 
-## Deploy on Vercel
+### Environment Variables
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Copy `.env.local.example` to `.env.local` and add your Supabase credentials when ready:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+## Project Structure
+
+```
+src/
+├── app/                    # Next.js app router
+├── components/
+│   ├── auth/              # Authentication components
+│   ├── database/          # Database views
+│   │   └── views/         # Table, Board, Calendar, Gallery, List
+│   ├── editor/            # Block editor components
+│   ├── layout/            # App layout
+│   ├── page/              # Page view components
+│   ├── settings/          # Settings dialog
+│   ├── sidebar/           # Sidebar navigation
+│   └── ui/                # Base UI components
+├── lib/                   # Utilities
+├── store/                 # Zustand store
+└── types/                 # TypeScript types
+```
+
+## Key Shortcuts
+
+- `Cmd/Ctrl + K` - Quick search
+- `/` - Slash commands in editor
+- `Cmd/Ctrl + B` - Bold
+- `Cmd/Ctrl + I` - Italic
+- `Cmd/Ctrl + U` - Underline
+
+## Adding Supabase
+
+To add real-time sync and authentication:
+
+1. Create a Supabase project
+2. Add your credentials to `.env.local`
+3. Install Supabase client: `npm install @supabase/supabase-js`
+4. Replace local storage with Supabase queries in the store
+
+## Licence
+
+MIT
