@@ -121,14 +121,17 @@ src/
 - `Cmd/Ctrl + I` - Italic
 - `Cmd/Ctrl + U` - Underline
 
-## Adding Supabase
+## Database Setup
 
-To add real-time sync and authentication:
+This project uses Supabase for authentication and data storage.
 
-1. Create a Supabase project
-2. Add your credentials to `.env.local`
-3. Install Supabase client: `npm install @supabase/supabase-js`
-4. Replace local storage with Supabase queries in the store
+### Quick Setup
+
+1. Make sure you have a Supabase project and credentials in `.env.local`
+2. Follow the [Database Setup Guide](SETUP.md) to run the migrations
+3. Refresh your browser and the app should work!
+
+**Important**: If you're seeing permission errors (`42501`), you need to run the database migrations. See [SETUP.md](SETUP.md) for detailed instructions.
 
 ## Licence
 

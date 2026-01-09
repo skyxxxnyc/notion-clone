@@ -8,35 +8,30 @@ import { EmptyState } from "@/components/page/EmptyState";
 import { QuickSearch } from "@/components/sidebar/QuickSearch";
 import { SettingsDialog } from "@/components/settings/SettingsDialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthPage } from "@/components/auth/AuthPage";
 import { cn } from "@/lib/utils";
 
 export function AppLayout() {
   const {
     sidebarOpen,
-    sidebarWidth,
     currentPageId,
     currentWorkspaceId,
+    currentUser,
     workspaces,
     createWorkspace,
-    setCurrentUser,
   } = useAppStore();
 
-  // Initialize default workspace and user on first load
+  // Create default workspace if none exists (must be before any conditional returns)
   useEffect(() => {
-    // Set default user
-    setCurrentUser({
-      id: "user-1",
-      name: "You",
-      email: "you@example.com",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-
-    // Create default workspace if none exists
-    if (workspaces.length === 0) {
+    if (currentUser && workspaces.length === 0) {
       createWorkspace("My Workspace");
     }
-  }, []);
+  }, [currentUser, workspaces.length, createWorkspace]);
+
+  // If no user is authenticated, show the auth page
+  if (!currentUser) {
+    return <AuthPage />;
+  }
 
   return (
     <TooltipProvider>

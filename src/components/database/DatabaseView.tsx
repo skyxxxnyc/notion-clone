@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useAppStore } from "@/store";
-import type { Page, DatabaseViewType, DatabaseRow } from "@/types";
+import type { Page, DatabaseViewType, DatabaseRow, Filter, Sort, FilterOperator } from "@/types";
 import { cn } from "@/lib/utils";
 import { TableView } from "./views/TableView";
 import { BoardView } from "./views/BoardView";
@@ -24,12 +24,11 @@ import {
   Image,
   List,
   Plus,
-  Filter,
-  SortAsc,
   Search,
-  ChevronDown,
   MoreHorizontal,
 } from "lucide-react";
+import { FilterMenu } from "./FilterMenu";
+import { SortMenu } from "./SortMenu";
 
 interface DatabaseViewProps {
   page: Page;
@@ -45,10 +44,12 @@ const VIEW_ICONS: Record<DatabaseViewType, React.ReactNode> = {
 };
 
 export function DatabaseView({ page }: DatabaseViewProps) {
-  const { databaseRows, createDatabaseRow, updatePage } = useAppStore();
+  const { databaseRows, createDatabaseRow } = useAppStore();
 
   const [currentViewType, setCurrentViewType] = useState<DatabaseViewType>("table");
   const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<Filter[]>([]);
+  const [sorts, setSorts] = useState<Sort[]>([]);
 
   const rows = databaseRows[page.id] || [];
   const config = page.databaseConfig;
@@ -57,65 +58,83 @@ export function DatabaseView({ page }: DatabaseViewProps) {
     createDatabaseRow(page.id);
   };
 
-  const filteredRows = rows.filter((row) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return Object.values(row.properties).some((value) =>
-      String(value).toLowerCase().includes(query)
-    );
-  });
+  const processedRows = useMemo(() => {
+    let result = [...rows];
+
+    // 1. Search
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((row) =>
+        Object.values(row.properties).some((value) =>
+          String(value).toLowerCase().includes(query)
+        )
+      );
+    }
+
+    // 2. Filters
+    filters.forEach((filter) => {
+      result = result.filter((row) => {
+        const value = row.properties[filter.propertyId];
+        const filterVal = filter.value as string;
+        const stringVal = String(value || "").toLowerCase();
+        const filterString = String(filterVal).toLowerCase();
+
+        switch (filter.operator) {
+          case "equals": return stringVal === filterString;
+          case "notEquals": return stringVal !== filterString;
+          case "contains": return stringVal.includes(filterString);
+          case "notContains": return !stringVal.includes(filterString);
+          case "startsWith": return stringVal.startsWith(filterString);
+          case "endsWith": return stringVal.endsWith(filterString);
+          case "isEmpty": return !value || value === "";
+          case "isNotEmpty": return !!value && value !== "";
+          default: return true;
+        }
+      });
+    });
+
+    // 3. Sorts
+    if (sorts.length > 0) {
+      result.sort((a, b) => {
+        for (const sort of sorts) {
+          const valA = a.properties[sort.propertyId];
+          const valB = b.properties[sort.propertyId];
+
+          if (valA === valB) continue;
+
+          const strA = String(valA || "");
+          const strB = String(valB || "");
+
+          const comparison = strA.localeCompare(strB, undefined, { numeric: true });
+
+          if (comparison !== 0) {
+            return sort.direction === "ascending" ? comparison : -comparison;
+          }
+        }
+        return 0;
+      });
+    }
+
+    return result;
+  }, [rows, searchQuery, filters, sorts]);
 
   const renderView = () => {
-    switch (currentViewType) {
-      case "table":
-        return (
-          <TableView
-            page={page}
-            rows={filteredRows}
-            onAddRow={handleAddRow}
-          />
-        );
-      case "board":
-        return (
-          <BoardView
-            page={page}
-            rows={filteredRows}
-            onAddRow={handleAddRow}
-          />
-        );
-      case "calendar":
-        return (
-          <CalendarView
-            page={page}
-            rows={filteredRows}
-            onAddRow={handleAddRow}
-          />
-        );
-      case "gallery":
-        return (
-          <GalleryView
-            page={page}
-            rows={filteredRows}
-            onAddRow={handleAddRow}
-          />
-        );
-      case "list":
-        return (
-          <ListView
-            page={page}
-            rows={filteredRows}
-            onAddRow={handleAddRow}
-          />
-        );
-      default:
-        return (
-          <TableView
-            page={page}
-            rows={filteredRows}
-            onAddRow={handleAddRow}
-          />
-        );
-    }
+    const ViewComponent = {
+      table: TableView,
+      board: BoardView,
+      calendar: CalendarView,
+      gallery: GalleryView,
+      list: ListView,
+      timeline: TableView, // Fallback
+    }[currentViewType] || TableView;
+
+    return (
+      <ViewComponent
+        page={page}
+        rows={processedRows}
+        onAddRow={handleAddRow}
+      />
+    );
   };
 
   return (
@@ -181,16 +200,18 @@ export function DatabaseView({ page }: DatabaseViewProps) {
           </div>
 
           {/* Filter */}
-          <Button variant="ghost" size="sm">
-            <Filter className="h-4 w-4 mr-1" />
-            Filter
-          </Button>
+          <FilterMenu
+            properties={config?.properties || []}
+            filters={filters}
+            onChange={setFilters}
+          />
 
           {/* Sort */}
-          <Button variant="ghost" size="sm">
-            <SortAsc className="h-4 w-4 mr-1" />
-            Sort
-          </Button>
+          <SortMenu
+            properties={config?.properties || []}
+            sorts={sorts}
+            onChange={setSorts}
+          />
 
           {/* More */}
           <DropdownMenu>

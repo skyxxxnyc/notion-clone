@@ -1,18 +1,22 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useAppStore } from "@/store";
 import { cn } from "@/lib/utils";
 import { BlockEditor } from "@/components/editor/BlockEditor";
 import { PageHeader } from "./PageHeader";
 import { PageBreadcrumb } from "./PageBreadcrumb";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useDebounce } from "@/hooks/useDebounce";
+import { DatabaseView } from "@/components/database/DatabaseView";
+import { DatabasePageLayout } from "@/components/database/layout/DatabasePageLayout";
 import {
   MessageSquare,
   Clock,
   Star,
   MoreHorizontal,
   Share,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,40 +41,133 @@ export function PageView({ pageId }: PageViewProps) {
     setCurrentPage,
   } = useAppStore();
 
+  const { fetchBlocks, savePageContent, saveStatus, setSaveStatus } = useAppStore();
   const page = pages[pageId];
-  const [editorContent, setEditorContent] = useState(
-    page?.blocks
-      .map((block) => {
-        // Convert blocks to HTML for the editor
-        switch (block.type) {
-          case "heading1":
-            return `<h1>${block.content}</h1>`;
-          case "heading2":
-            return `<h2>${block.content}</h2>`;
-          case "heading3":
-            return `<h3>${block.content}</h3>`;
-          case "bulletList":
-            return `<ul><li>${block.content}</li></ul>`;
-          case "numberedList":
-            return `<ol><li>${block.content}</li></ol>`;
-          case "quote":
-            return `<blockquote>${block.content}</blockquote>`;
-          case "code":
-            return `<pre><code>${block.content}</code></pre>`;
-          default:
-            return `<p>${block.content}</p>`;
-        }
-      })
-      .join("") || "<p></p>"
-  );
+  const parentPage = page?.parentId ? pages[page.parentId] : null;
+  const isDatabaseItem = parentPage?.isDatabase;
+  const [editorContent, setEditorContent] = useState("");
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [showStatus, setShowStatus] = useState(false);
+
+  // Show status indicator when it changes, and hide after 3 seconds if saved
+  useEffect(() => {
+    if (saveStatus !== "saved") {
+      setShowStatus(true);
+    } else {
+      const timer = setTimeout(() => setShowStatus(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [saveStatus]);
+
+  const debouncedSave = useDebounce(async (html: string, json: any) => {
+    if (!json?.content) return;
+
+    // Map Tiptap JSON nodes to our Block structure
+    const mappedBlocks: any[] = json.content.map((node: any) => {
+      let type: string = "text";
+      let content: string = "";
+
+      // Extract text content from node
+      const extractText = (n: any): string => {
+        if (n.text) return n.text;
+        if (n.content) return n.content.map(extractText).join("");
+        return "";
+      };
+
+      content = extractText(node);
+
+      switch (node.type) {
+        case "heading":
+          type = node.attrs.level === 1 ? "heading1" : node.attrs.level === 2 ? "heading2" : "heading3";
+          break;
+        case "bulletList":
+          type = "bulletList";
+          break;
+        case "orderedList":
+          type = "numberedList";
+          break;
+        case "taskList":
+          type = "todoList";
+          break;
+        case "blockquote":
+          type = "quote";
+          break;
+        case "codeBlock":
+          type = "code";
+          break;
+        case "horizontalRule":
+          type = "divider";
+          break;
+        case "image":
+          type = "image";
+          content = node.attrs.src;
+          break;
+        default:
+          type = "text";
+      }
+
+      return {
+        type,
+        content,
+        parentId: null,
+        properties: node.attrs || {},
+      };
+    });
+
+    try {
+      await savePageContent(pageId, mappedBlocks);
+    } catch (error) {
+      console.error("Auto-save failed:", error);
+    }
+  }, 1500);
 
   const handleContentChange = useCallback(
-    (content: string) => {
-      setEditorContent(content);
-      // Could debounce this and sync back to store
+    (html: string, json?: any) => {
+      setEditorContent(html);
+      setSaveStatus("unsaved");
+      debouncedSave(html, json);
     },
-    []
+    [debouncedSave, setSaveStatus]
   );
+
+  // Fetch blocks when page opens
+  useEffect(() => {
+    if (pageId) {
+      setIsLoaded(false);
+      fetchBlocks(pageId).then(() => {
+        setIsLoaded(true);
+      });
+    }
+  }, [pageId, fetchBlocks]);
+
+  // Update editor content when page or blocks change
+  useEffect(() => {
+    if (page?.blocks && !isLoaded) { // Only set on initial load to avoid jumping during typing
+      const html = page.blocks
+        .map((block) => {
+          switch (block.type) {
+            case "heading1":
+              return `<h1>${block.content}</h1>`;
+            case "heading2":
+              return `<h2>${block.content}</h2>`;
+            case "heading3":
+              return `<h3>${block.content}</h3>`;
+            case "bulletList":
+              return `<ul><li>${block.content}</li></ul>`;
+            case "numberedList":
+              return `<ol><li>${block.content}</li></ol>`;
+            case "quote":
+              return `<blockquote>${block.content}</blockquote>`;
+            case "code":
+              return `<pre><code>${block.content}</code></pre>`;
+            default:
+              return `<p>${block.content}</p>`;
+          }
+        })
+        .join("");
+      setEditorContent(html || "<p></p>");
+    }
+  }, [page?.blocks, isLoaded]);
 
   const handleTitleChange = useCallback(
     (title: string) => {
@@ -93,21 +190,24 @@ export function PageView({ pageId }: PageViewProps) {
     [pageId, updatePage]
   );
 
-  const handleDuplicate = () => {
-    const newPage = duplicatePage(pageId);
+  const handleDuplicate = async () => {
+    const newPage = await duplicatePage(pageId);
     setCurrentPage(newPage.id);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this page?")) {
-      deletePage(pageId);
+      await deletePage(pageId);
     }
   };
 
-  if (!page) {
+  if (!page || !isLoaded) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-neutral-500">Page not found</p>
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-8 h-8 border-2 border-neutral-200 border-t-neutral-800 rounded-full animate-spin" />
+          <p className="text-neutral-500 text-sm">Loading page...</p>
+        </div>
       </div>
     );
   }
@@ -119,6 +219,25 @@ export function PageView({ pageId }: PageViewProps) {
         <PageBreadcrumb pageId={pageId} />
 
         <div className="flex items-center gap-2">
+          {saveStatus === "saving" && (
+            <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-neutral-400 animate-in fade-in duration-300">
+              <div className="w-2 h-2 border border-neutral-300 border-t-neutral-600 rounded-full animate-spin" />
+              Saving...
+            </div>
+          )}
+          {saveStatus === "saved" && showStatus && (
+            <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-green-600/70 animate-in fade-in slide-in-from-bottom-1 duration-300">
+              <Check className="h-3 w-3" />
+              Saved
+            </div>
+          )}
+          {saveStatus === "unsaved" && (
+            <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-amber-600/70">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              Unsaved
+            </div>
+          )}
+
           <Button
             variant="ghost"
             size="sm"
@@ -169,23 +288,33 @@ export function PageView({ pageId }: PageViewProps) {
 
       {/* Page Content */}
       <ScrollArea className="flex-1">
-        <div className="max-w-4xl mx-auto px-16 py-12">
-          <PageHeader
+        {page.isDatabase ? (
+          <DatabaseView page={page} />
+        ) : isDatabaseItem ? (
+          <DatabasePageLayout
             page={page}
-            onTitleChange={handleTitleChange}
-            onIconChange={handleIconChange}
-            onCoverChange={handleCoverChange}
+            initialContent={editorContent}
+            onContentChange={handleContentChange}
           />
-
-          <div className="mt-8">
-            <BlockEditor
-              content={editorContent}
-              onChange={handleContentChange}
-              pageId={pageId}
-              placeholder="Press '/' for commands, or just start typing..."
+        ) : (
+          <div className="max-w-4xl mx-auto px-16 py-12">
+            <PageHeader
+              page={page}
+              onTitleChange={handleTitleChange}
+              onIconChange={handleIconChange}
+              onCoverChange={handleCoverChange}
             />
+
+            <div className="mt-8">
+              <BlockEditor
+                content={editorContent}
+                onChange={handleContentChange}
+                pageId={pageId}
+                placeholder="Press '/' for commands, or just start typing..."
+              />
+            </div>
           </div>
-        </div>
+        )}
       </ScrollArea>
     </div>
   );

@@ -6,16 +6,25 @@ import { Button } from "@/components/ui/button";
 import { FileText, Plus, Database, Import, Layout } from "lucide-react";
 
 export function EmptyState() {
-  const { createPage, setCurrentPage, currentWorkspaceId, workspaces, createWorkspace } = useAppStore();
+  const { createPage, createDatabase, setCurrentPage, currentWorkspaceId, workspaces, createWorkspace } = useAppStore();
 
-  const handleCreatePage = () => {
+  const handleCreatePage = async () => {
     // Ensure we have a workspace first
     if (!currentWorkspaceId) {
       const workspace = createWorkspace("My Workspace");
       // The createWorkspace function sets the current workspace
     }
-    const newPage = createPage(null);
+    const newPage = await createPage(null);
     setCurrentPage(newPage.id);
+  };
+
+  const handleCreateDatabase = async () => {
+    // Ensure we have a workspace first
+    if (!currentWorkspaceId) {
+      const workspace = createWorkspace("My Workspace");
+    }
+    const newDatabase = await createDatabase(null);
+    setCurrentPage(newDatabase.id);
   };
 
   const currentWorkspace = workspaces.find((w) => w.id === currentWorkspaceId);
@@ -49,7 +58,7 @@ export function EmptyState() {
               <FileText className="h-4 w-4 mr-2" />
               Empty page
             </Button>
-            <Button variant="outline" className="w-full" onClick={handleCreatePage}>
+            <Button variant="outline" className="w-full" onClick={handleCreateDatabase}>
               <Database className="h-4 w-4 mr-2" />
               Database
             </Button>

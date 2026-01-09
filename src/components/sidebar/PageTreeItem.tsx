@@ -13,6 +13,7 @@ import {
   Copy,
   Trash2,
   ExternalLink,
+  Table,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -66,23 +67,23 @@ export function PageTreeItem({ page, level }: PageTreeItemProps) {
     togglePageExpanded(page.id);
   };
 
-  const handleAddSubpage = (e: React.MouseEvent) => {
+  const handleAddSubpage = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const newPage = createPage(page.id);
+    const newPage = await createPage(page.id);
     setCurrentPage(newPage.id);
     if (!isExpanded) {
       togglePageExpanded(page.id);
     }
   };
 
-  const handleDuplicate = () => {
-    const newPage = duplicatePage(page.id);
+  const handleDuplicate = async () => {
+    const newPage = await duplicatePage(page.id);
     setCurrentPage(newPage.id);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this page?")) {
-      deletePage(page.id);
+      await deletePage(page.id);
     }
   };
 
@@ -94,7 +95,7 @@ export function PageTreeItem({ page, level }: PageTreeItemProps) {
     toggleFavourite(page.id);
   };
 
-  const pageIcon = page.icon || <FileText className="h-4 w-4 text-neutral-400" />;
+  const pageIcon = page.icon || (page.isDatabase ? <Table className="h-4 w-4 text-neutral-400" /> : <FileText className="h-4 w-4 text-neutral-400" />);
 
   return (
     <ContextMenu>

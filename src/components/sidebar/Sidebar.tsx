@@ -16,10 +16,13 @@ import {
   Trash2,
   FileText,
   MoreHorizontal,
+  Table,
+  Upload,
 } from "lucide-react";
 import { PageTreeItem } from "./PageTreeItem";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { QuickSearch } from "./QuickSearch";
+import { ImportModal } from "../import/ImportModal";
 
 interface SidebarProps {
   className?: string;
@@ -34,12 +37,14 @@ export function Sidebar({ className }: SidebarProps) {
     pages,
     currentWorkspaceId,
     createPage,
+    createDatabase,
     setCurrentPage,
     setSearchOpen,
     setSettingsOpen,
   } = useAppStore();
 
   const [isResizing, setIsResizing] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   // Get root pages (no parent)
   const rootPages = Object.values(pages).filter(
@@ -75,9 +80,14 @@ export function Sidebar({ className }: SidebarProps) {
     document.addEventListener("mouseup", handleMouseUp);
   };
 
-  const handleNewPage = () => {
-    const newPage = createPage(null);
+  const handleNewPage = async () => {
+    const newPage = await createPage(null);
     setCurrentPage(newPage.id);
+  };
+
+  const handleNewDatabase = async () => {
+    const newDatabase = await createDatabase(null);
+    setCurrentPage(newDatabase.id);
   };
 
   if (!sidebarOpen) {
@@ -150,6 +160,20 @@ export function Sidebar({ className }: SidebarProps) {
         >
           <Plus className="h-4 w-4" />
           <span>New Page</span>
+        </button>
+        <button
+          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-600 hover:bg-neutral-200/50 rounded transition-colors"
+          onClick={handleNewDatabase}
+        >
+          <Table className="h-4 w-4" />
+          <span>New Database</span>
+        </button>
+        <button
+          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-600 hover:bg-neutral-200/50 rounded transition-colors"
+          onClick={() => setImportOpen(true)}
+        >
+          <Upload className="h-4 w-4" />
+          <span>Import</span>
         </button>
       </div>
 
@@ -224,6 +248,7 @@ export function Sidebar({ className }: SidebarProps) {
         )}
         onMouseDown={handleMouseDown}
       />
+      <ImportModal open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }

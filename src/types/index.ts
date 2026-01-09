@@ -1,5 +1,7 @@
 // Core Types for Notion Clone
 
+import { DatabaseLayout } from "./layout";
+
 export type BlockType =
   | "text"
   | "heading1"
@@ -93,6 +95,7 @@ export interface Page {
   isTemplate: boolean;
   isDatabase: boolean;
   databaseConfig?: DatabaseConfig;
+  properties?: Record<string, PropertyValue>;
   children: string[]; // Page IDs
   blocks: Block[];
   path: string[]; // Breadcrumb path of page IDs
@@ -127,10 +130,14 @@ export interface BlockProperties {
   columns?: number; // For column layouts
 }
 
+
+
 export interface DatabaseConfig {
   properties: DatabaseProperty[];
   views: DatabaseView[];
   defaultViewId: string;
+  layout?: DatabaseLayout;
+  values?: Record<string, PropertyValue>; // Store row properties here as fallback
 }
 
 export interface DatabaseProperty {

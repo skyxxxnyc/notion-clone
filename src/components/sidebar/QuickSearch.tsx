@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -130,6 +131,10 @@ export function QuickSearch() {
   return (
     <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
       <DialogContent className="p-0 max-w-xl">
+        <DialogTitle className="sr-only">Quick Search</DialogTitle>
+        <DialogDescription className="sr-only">
+          Search for pages and navigate quickly.
+        </DialogDescription>
         <div className="flex items-center gap-3 px-4 py-3 border-b border-neutral-200">
           <Search className="h-5 w-5 text-neutral-400" />
           <Input

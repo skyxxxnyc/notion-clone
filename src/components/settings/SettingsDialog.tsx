@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,8 +23,10 @@ import {
   Users,
   Link,
   Trash2,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { signOut } from "@/actions/auth";
 
 const SETTINGS_SECTIONS = [
   { id: "account", label: "Account", icon: User },
@@ -37,12 +40,27 @@ const SETTINGS_SECTIONS = [
 export function SettingsDialog() {
   const { settingsOpen, setSettingsOpen, currentUser, updateWorkspace, currentWorkspaceId, workspaces } = useAppStore();
   const [activeSection, setActiveSection] = useState("account");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const currentWorkspace = workspaces.find((w) => w.id === currentWorkspaceId);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Logout error:", error);
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
       <DialogContent className="max-w-4xl h-[600px] p-0">
+        <DialogTitle className="sr-only">Settings</DialogTitle>
+        <DialogDescription className="sr-only">
+          Manage your account settings and workspace preferences.
+        </DialogDescription>
         <div className="flex h-full">
           {/* Sidebar */}
           <div className="w-56 border-r border-neutral-200 bg-neutral-50 p-4">
@@ -102,6 +120,18 @@ export function SettingsDialog() {
                       <Input defaultValue={currentUser?.email || ""} type="email" />
                     </div>
                   </div>
+                </div>
+
+                <div className="border-t border-neutral-200 pt-6">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-center"
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    {isLoggingOut ? "Logging out..." : "Log out"}
+                  </Button>
                 </div>
 
                 <div className="border-t border-neutral-200 pt-6">

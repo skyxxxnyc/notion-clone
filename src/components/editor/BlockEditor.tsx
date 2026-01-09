@@ -8,8 +8,6 @@ import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
-import Underline from "@tiptap/extension-underline";
-import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import { common, createLowlight } from "lowlight";
@@ -22,7 +20,7 @@ const lowlight = createLowlight(common);
 
 interface BlockEditorProps {
   content: string;
-  onChange: (content: string) => void;
+  onChange: (html: string, json?: any) => void;
   pageId: string;
   placeholder?: string;
   className?: string;
@@ -38,6 +36,7 @@ export function BlockEditor({
   editable = true,
 }: BlockEditorProps) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: {
@@ -72,13 +71,13 @@ export function BlockEditor({
       TextAlign.configure({
         types: ["heading", "paragraph"],
       }),
-      Underline,
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: "text-blue-600 underline cursor-pointer hover:text-blue-800",
-        },
-      }),
+      // Underline,
+      // Link.configure({
+      //   openOnClick: false,
+      //   HTMLAttributes: {
+      //     class: "text-blue-600 underline cursor-pointer hover:text-blue-800",
+      //   },
+      // }),
       Image.configure({
         HTMLAttributes: {
           class: "max-w-full rounded-lg",
@@ -94,7 +93,7 @@ export function BlockEditor({
     content,
     editable,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      onChange(editor.getHTML(), editor.getJSON());
     },
     editorProps: {
       attributes: {

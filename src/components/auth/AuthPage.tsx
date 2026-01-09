@@ -3,58 +3,109 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { login, signup, signInWithGoogle } from "@/actions/auth";
 
-interface AuthPageProps {
-  onAuth: (user: { name: string; email: string }) => void;
-}
-
-export function AuthPage({ onAuth }: AuthPageProps) {
+export function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
-    // Simulate auth - replace with Supabase auth
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const formData = new FormData();
+    formData.append("email", email);
+    formData.append("password", password);
+    if (name) formData.append("name", name);
 
-    onAuth({
-      name: name || email.split("@")[0],
-      email,
-    });
+    try {
+      let result;
+      if (mode === "login") {
+        result = await login(formData);
+      } else {
+        result = await signup(formData);
+      }
 
-    setIsLoading(false);
+      if (result && 'error' in result && result.error) {
+        setError(result.error);
+        setIsLoading(false);
+        return;
+      }
+
+      // Success - redirect to home page
+      window.location.href = "/";
+    } catch (err: any) {
+      console.error("Auth error:", err);
+      setError(err?.message || "Authentication failed. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      console.error("Google sign-in error:", err);
+      setError("Google sign-in failed. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50">
-      <div className="w-full max-w-md">
-        {/* Logo */}
+    <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A] relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      </div>
+
+      <div className="w-full max-w-md z-10 px-4">
+        {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-neutral-900 rounded-2xl mb-4">
-            <span className="text-white text-2xl font-bold">N</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-500 to-orange-600 rounded-2xl mb-6 shadow-lg shadow-red-500/20">
+            <svg
+              className="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
           </div>
-          <h1 className="text-2xl font-bold text-neutral-900">
-            {mode === "login" ? "Log in" : "Create your account"}
+          <h1 className="text-3xl font-bold text-white mb-2">
+            {mode === "login" ? "Welcome back" : "Create account"}
           </h1>
-          <p className="text-neutral-500 mt-2">
+          <p className="text-neutral-400">
             {mode === "login"
-              ? "Welcome back! Enter your credentials to continue."
-              : "Get started with your free workspace."}
+              ? "Sign in to continue to your workspace"
+              : "Get started with your personal workspace"}
           </p>
         </div>
 
         {/* Auth Form */}
-        <div className="bg-white border border-neutral-200 rounded-xl p-8 shadow-sm">
+        <div className="bg-[#111111]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+          {error && (
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+                <label className="block text-sm font-medium text-neutral-300 mb-2">
                   Full name
                 </label>
                 <Input
@@ -63,12 +114,13 @@ export function AuthPage({ onAuth }: AuthPageProps) {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="John Doe"
                   required
+                  className="bg-[#1A1A1A] border-white/10 text-white placeholder:text-neutral-500 focus:border-red-500/50 focus:ring-red-500/20"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
                 Email address
               </label>
               <Input
@@ -77,11 +129,12 @@ export function AuthPage({ onAuth }: AuthPageProps) {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
+                className="bg-[#1A1A1A] border-white/10 text-white placeholder:text-neutral-500 focus:border-red-500/50 focus:ring-red-500/20"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1.5">
+              <label className="block text-sm font-medium text-neutral-300 mb-2">
                 Password
               </label>
               <Input
@@ -91,44 +144,49 @@ export function AuthPage({ onAuth }: AuthPageProps) {
                 placeholder="••••••••"
                 required
                 minLength={8}
+                className="bg-[#1A1A1A] border-white/10 text-white placeholder:text-neutral-500 focus:border-red-500/50 focus:ring-red-500/20"
               />
+              {mode === "signup" && (
+                <p className="text-xs text-neutral-500 mt-1">
+                  At least 8 characters
+                </p>
+              )}
             </div>
 
-            {mode === "login" && (
-              <div className="text-right">
-                <a
-                  href="#"
-                  className="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  Forgot password?
-                </a>
-              </div>
-            )}
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white font-medium py-6 rounded-xl shadow-lg shadow-red-500/20 transition-all duration-200 hover:shadow-red-500/40 hover:scale-[1.02]"
+              disabled={isLoading}
+            >
               {isLoading
-                ? "Loading..."
+                ? "Please wait..."
                 : mode === "login"
-                ? "Log in"
-                : "Create account"}
+                  ? "Sign in"
+                  : "Create account"}
             </Button>
           </form>
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-neutral-200" />
+              <div className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-neutral-500">
+              <span className="bg-[#111111] px-3 text-neutral-500">
                 Or continue with
               </span>
             </div>
           </div>
 
           {/* Social Auth */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" type="button">
-              <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
+          <div className="space-y-3">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="w-full bg-[#1A1A1A] border-white/10 text-white hover:bg-[#222222] hover:border-white/20 py-6 rounded-xl transition-all duration-200"
+            >
+              <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                   fill="#4285F4"
@@ -146,25 +204,19 @@ export function AuthPage({ onAuth }: AuthPageProps) {
                   fill="#EA4335"
                 />
               </svg>
-              Google
-            </Button>
-            <Button variant="outline" type="button">
-              <svg className="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-              </svg>
-              GitHub
+              Continue with Google
             </Button>
           </div>
         </div>
 
         {/* Toggle Mode */}
-        <p className="text-center mt-6 text-sm text-neutral-600">
+        <p className="text-center mt-6 text-sm text-neutral-400">
           {mode === "login" ? (
             <>
               Don't have an account?{" "}
               <button
                 onClick={() => setMode("signup")}
-                className="text-blue-600 hover:text-blue-800 font-medium"
+                className="text-red-400 hover:text-red-300 font-medium transition-colors"
               >
                 Sign up
               </button>
@@ -174,9 +226,9 @@ export function AuthPage({ onAuth }: AuthPageProps) {
               Already have an account?{" "}
               <button
                 onClick={() => setMode("login")}
-                className="text-blue-600 hover:text-blue-800 font-medium"
+                className="text-red-400 hover:text-red-300 font-medium transition-colors"
               >
-                Log in
+                Sign in
               </button>
             </>
           )}

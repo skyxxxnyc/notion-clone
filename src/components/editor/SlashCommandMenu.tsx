@@ -15,8 +15,10 @@ import {
   Image,
   Minus,
   Link,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { generateContent } from "@/actions/ai";
 
 interface SlashCommandMenuProps {
   editor: Editor;
@@ -31,6 +33,38 @@ interface CommandItem {
 }
 
 const commands: CommandItem[] = [
+  {
+    title: "Ask AI",
+    description: "Generate content with AI",
+    icon: <Sparkles className="h-4 w-4 text-purple-500" />,
+    keywords: ["ai", "gpt", "generate", "ask", "magic"],
+    command: async (editor) => {
+      const prompt = window.prompt("What should I write?");
+      if (prompt) {
+        // Disable editing to prevent conflicts
+        editor.setEditable(false);
+
+        // Insert a loading placeholder
+        editor.chain().insertContent("<p>✨ Generating...</p>").run();
+
+        try {
+          const content = await generateContent(prompt);
+
+          // Revert the placeholder state
+          editor.chain().undo().run();
+
+          if (content) {
+            editor.chain().focus().insertContent(content).run();
+          }
+        } catch (error) {
+          editor.chain().undo().run();
+          alert("AI Error: " + (error as Error).message);
+        } finally {
+          editor.setEditable(true);
+        }
+      }
+    },
+  },
   {
     title: "Text",
     description: "Just start writing with plain text",

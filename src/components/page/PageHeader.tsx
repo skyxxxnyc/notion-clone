@@ -258,19 +258,51 @@ export function PageHeader({
             </div>
 
             <div className="mt-4 pt-4 border-t border-neutral-200">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  const url = window.prompt("Enter image URL:");
-                  if (url) {
-                    onCoverChange(url);
-                    setShowCoverPicker(false);
-                  }
-                }}
-              >
-                <Image className="h-4 w-4 mr-2" />
-                Add from URL
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const url = window.prompt("Enter image URL:");
+                    if (url) {
+                      onCoverChange(url);
+                      setShowCoverPicker(false);
+                    }
+                  }}
+                >
+                  <Image className="h-4 w-4 mr-2" />
+                  Add from URL
+                </Button>
+
+                <label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      try {
+                        // For now, use a data URL (client-side)
+                        // In production, you'd upload to Supabase Storage
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const dataUrl = event.target?.result as string;
+                          onCoverChange(dataUrl);
+                          setShowCoverPicker(false);
+                        };
+                        reader.readAsDataURL(file);
+                      } catch (error) {
+                        alert("Failed to upload image");
+                      }
+                    }}
+                  />
+                  <Button variant="outline" type="button">
+                    <Image className="h-4 w-4 mr-2" />
+                    Upload
+                  </Button>
+                </label>
+              </div>
             </div>
           </div>
         </div>
