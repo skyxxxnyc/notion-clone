@@ -20,7 +20,8 @@ export function LayoutModuleRenderer({ module, page, layout, content, onUpdateCo
 
     switch (module.type) {
         case "heading":
-            // For heading, we also look at layout.pinnedPropertyIds
+            // For heading, we show title/icon/cover + up to 4 pinned properties
+            const pinnedIds = layout.pinnedPropertyIds.slice(0, 4);
             return (
                 <div className="mb-8 group">
                     <PageHeader
@@ -30,51 +31,34 @@ export function LayoutModuleRenderer({ module, page, layout, content, onUpdateCo
                         onCoverChange={(cover) => useAppStore.getState().updatePage(page.id, { coverImage: cover })}
                     />
 
-                    {/* Pinned Properties (Horizontal) */}
-                    {layout.pinnedPropertyIds.length > 0 && (
-                        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
-                            {/* Use PropertyStack but styled horizontally? 
-                  Or just reuse logic. For now, PropertyStack is vertical.
-                  We might need a horizontal variant or manual rendering.
-              */}
+                    {/* Pinned Properties (Horizontal grid, max 4) */}
+                    {pinnedIds.length > 0 && (
+                        <div className="mt-4">
                             <PropertyStack
                                 page={page}
-                                propertyIds={layout.pinnedPropertyIds}
-                                className="grid grid-cols-2 gap-x-8 w-full"
+                                propertyIds={pinnedIds}
+                                className={`grid ${pinnedIds.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-x-8 gap-y-3 w-full`}
                             />
                         </div>
                     )}
                 </div>
             );
 
-        case "properties":
+        case "property_group":
             return (
                 <div className="mb-8">
+                    {module.label && (
+                        <h3 className="text-sm font-semibold text-neutral-700 mb-3">{module.label}</h3>
+                    )}
                     <PropertyStack
                         page={page}
                         propertyIds={module.propertyIds}
+                        sections={module.sections}
                     />
                 </div>
             );
 
         case "content":
-            // We need to fetch blocks content? 
-            // PageView handles fetching content.
-            // But here we need to pass it to BlockEditor.
-
-            // Note: In current architecture, PageView fetches blocks.
-            // We need to get that content here.
-            // For now, assuming BlockEditor fetches or store has it? 
-            // BlockEditor currently takes `content` string.
-            // The PageView logic passes `initialContent`.
-
-            // Ideally, the parent component (DatabasePageLayout) manages content state.
-            // We'll assume the parent passes correct props or we access store.
-
-            // For this implementation, we rely on the parent DatabasePageLayout to pass the current content state
-            // But BlockEditor manages its own state mostly.
-
-            // Let's assume we use the same pattern as PageView
             return (
                 <div className="min-h-[400px]">
                     <BlockEditor
@@ -86,10 +70,58 @@ export function LayoutModuleRenderer({ module, page, layout, content, onUpdateCo
                 </div>
             );
 
-        case "related_tabs":
+        case "relation_group":
+            // Show related items from a relation property
+            const parentPage = page.parentId ? pages[page.parentId] : null;
+            const relationProp = parentPage?.databaseConfig?.properties.find(
+                p => p.id === module.relationPropertyId
+            );
+
             return (
-                <div className="border border-neutral-200 rounded-lg p-4 bg-neutral-50 mb-8">
-                    <div className="text-sm text-neutral-500 font-medium">Related Items (Tabs Placeholder)</div>
+                <div className="border border-neutral-200 rounded-lg p-4 mb-8">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold text-neutral-700">
+                            {module.label || relationProp?.name || 'Related Items'}
+                        </h3>
+                        <button className="text-xs text-neutral-500 hover:text-neutral-700">
+                            + Add
+                        </button>
+                    </div>
+                    <div className="text-sm text-neutral-500">
+                        No related items yet
+                    </div>
+                </div>
+            );
+
+        case "sub_items":
+            // Show sub-pages/sub-items of this page
+            const subPages = page.children
+                .map(id => pages[id])
+                .filter(Boolean);
+
+            return (
+                <div className="border border-neutral-200 rounded-lg p-4 mb-8">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold text-neutral-700">
+                            {module.label || 'Sub-items'}
+                        </h3>
+                        <button className="text-xs text-neutral-500 hover:text-neutral-700">
+                            + New
+                        </button>
+                    </div>
+                    {subPages.length === 0 ? (
+                        <div className="text-sm text-neutral-500">
+                            No sub-items yet
+                        </div>
+                    ) : (
+                        <div className="space-y-1">
+                            {subPages.map(subPage => (
+                                <div key={subPage.id} className="text-sm hover:bg-neutral-50 px-2 py-1 rounded">
+                                    {subPage.icon} {subPage.title || 'Untitled'}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             );
 

@@ -51,7 +51,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { generateCellContent } from "@/actions/ai";
+import { generateCellContent, autoFillColumn, type RowData } from "@/actions/ai";
 
 interface TableViewProps {
   page: Page;
@@ -92,7 +92,7 @@ const PROPERTY_TYPES: { type: PropertyType; label: string }[] = [
 ];
 
 export function TableView({ page, rows, onAddRow }: TableViewProps) {
-  const { updateDatabaseRow, deleteDatabaseRow, bulkDeleteDatabaseRows, setCurrentPage, updatePage } = useAppStore();
+  const { pages, updateDatabaseRow, deleteDatabaseRow, bulkDeleteDatabaseRows, setCurrentPage, updatePage } = useAppStore();
   const config = page.databaseConfig || {
     properties: DEFAULT_PROPERTIES,
     views: [],
@@ -190,7 +190,14 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
     }
   };
 
-  const visibleProperties = properties.filter(p => p.isVisible !== false);
+  // Order properties: pinned properties first (from layout), then remaining visible properties
+  const layout = config.layout;
+  const pinnedIds = layout?.pinnedPropertyIds || [];
+
+  const allVisible = properties.filter(p => p.isVisible !== false);
+  const pinned = pinnedIds.map(id => allVisible.find(p => p.id === id)).filter(Boolean) as typeof allVisible;
+  const unpinned = allVisible.filter(p => !pinnedIds.includes(p.id));
+  const visibleProperties = [...pinned, ...unpinned];
 
   return (
     <div className="w-full">
@@ -224,6 +231,8 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
                 onDelete={handleDeleteProperty}
                 isHighlighted={highlightedPropertyId === property.id}
                 onToggleHighlight={() => setHighlightedPropertyId(curr => curr === property.id ? null : property.id)}
+                rows={rows}
+                databaseId={page.id}
               />
             ))}
           </SortableContext>
@@ -297,7 +306,7 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
                         handleCellChange(row.id, property.id, value)
                       }
                       onOpenPage={() => setCurrentPage(row.id)}
-                      rowTitle={row.properties['title'] as string || row.title}
+                      rowTitle={row.properties['title'] as string || pages[row.pageId]?.title || 'Untitled'}
                       rowProperties={row.properties}
                     />
                   </div>
@@ -366,9 +375,12 @@ interface SortableHeaderProps {
   onDelete: (id: string) => void;
   isHighlighted?: boolean;
   onToggleHighlight?: () => void;
+  rows: DatabaseRow[];
+  databaseId: string;
 }
 
-function SortableHeader({ property, onUpdate, onDelete, isHighlighted, onToggleHighlight }: SortableHeaderProps) {
+function SortableHeader({ property, onUpdate, onDelete, isHighlighted, onToggleHighlight, rows, databaseId }: SortableHeaderProps) {
+  const { updateDatabaseRow, pages } = useAppStore();
   const {
     attributes,
     listeners,
@@ -387,6 +399,93 @@ function SortableHeader({ property, onUpdate, onDelete, isHighlighted, onToggleH
   };
 
   const [localWidth, setLocalWidth] = useState<number | null>(null);
+  const [showAutoFillDialog, setShowAutoFillDialog] = useState(false);
+  const [autoFillInstruction, setAutoFillInstruction] = useState("");
+  const [skipExisting, setSkipExisting] = useState(true);
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const [autoFillProgress, setAutoFillProgress] = useState<{ current: number; total: number } | null>(null);
+
+  const handleAutoFill = async () => {
+    if (!autoFillInstruction.trim()) {
+      alert("Please provide instructions for how to fill this column.");
+      return;
+    }
+
+    const emptyCount = rows.filter(row => !row.properties[property.id] || row.properties[property.id] === "" || row.properties[property.id] === null).length;
+    const totalCount = skipExisting ? emptyCount : rows.length;
+
+    if (totalCount === 0) {
+      alert("No rows to fill.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `This will auto-fill ${totalCount} row${totalCount > 1 ? 's' : ''} in the "${property.name}" column using AI.\n\nInstruction: "${autoFillInstruction}"\n\nThis may take a moment. Continue?`
+    );
+
+    if (!confirmed) return;
+
+    setIsAutoFilling(true);
+    setAutoFillProgress({ current: 0, total: totalCount });
+
+    try {
+      // Prepare row data
+      const rowData: RowData[] = rows.map(row => ({
+        rowId: row.id,
+        title: (row.properties.title as string) || pages[row.pageId]?.title || 'Untitled',
+        properties: row.properties
+      }));
+
+      // Call auto-fill API
+      const results = await autoFillColumn(
+        property.name,
+        property.type,
+        rowData,
+        autoFillInstruction,
+        {
+          skipExisting,
+          propertyOptions: property.options,
+          batchSize: 5
+        }
+      );
+
+      // Update rows with results
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const result of results) {
+        if (result.error) {
+          errorCount++;
+          console.error(`Failed to fill row ${result.rowId}:`, result.error);
+        } else {
+          await updateDatabaseRow(databaseId, result.rowId, {
+            properties: {
+              ...rows.find(r => r.id === result.rowId)?.properties,
+              [property.id]: result.value
+            }
+          });
+          successCount++;
+        }
+        setAutoFillProgress({ current: successCount + errorCount, total: totalCount });
+      }
+
+      // Show results
+      if (errorCount > 0) {
+        alert(`Auto-fill completed!\n\nSuccessfully filled: ${successCount} rows\nFailed: ${errorCount} rows\n\nCheck console for error details.`);
+      } else {
+        alert(`Successfully auto-filled ${successCount} rows!`);
+      }
+
+      setShowAutoFillDialog(false);
+      setAutoFillInstruction("");
+    } catch (error: any) {
+      console.error("Auto-fill error:", error);
+      alert(`Auto-fill failed: ${error.message || 'Unknown error'}\n\nMake sure you have set GEMINI_API_KEY or PERPLEXITY_API_KEY in your environment.`);
+    } finally {
+      setIsAutoFilling(false);
+      setAutoFillProgress(null);
+    }
+  };
 
   const handleResizeMouseDownSmoother = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -462,6 +561,11 @@ function SortableHeader({ property, onUpdate, onDelete, isHighlighted, onToggleH
             </DropdownMenuSubContent>
           </DropdownMenuSub>
           <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setShowAutoFillDialog(true)}>
+            <Sparkles className="h-3 w-3 mr-2" />
+            Auto-fill column with AI
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => onUpdate(property.id, { isVisible: false })}>
             <EyeOff className="h-3 w-3 mr-2" />
             Hide in view
@@ -472,6 +576,111 @@ function SortableHeader({ property, onUpdate, onDelete, isHighlighted, onToggleH
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Auto-fill Dialog */}
+      {showAutoFillDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => !isAutoFilling && setShowAutoFillDialog(false)}>
+          <div className="bg-white rounded-lg shadow-xl w-[500px] max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-neutral-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-violet-600" />
+                  <h2 className="text-lg font-semibold">Auto-fill Column with AI</h2>
+                </div>
+                {!isAutoFilling && (
+                  <button
+                    onClick={() => setShowAutoFillDialog(false)}
+                    className="text-neutral-400 hover:text-neutral-600"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div>
+                <div className="text-sm font-medium text-neutral-700 mb-1">
+                  Column: <span className="text-violet-600">{property.name}</span>
+                </div>
+                <div className="text-xs text-neutral-500">
+                  Type: {property.type}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-neutral-700 block mb-2">
+                  How should AI fill this column?
+                </label>
+                <textarea
+                  value={autoFillInstruction}
+                  onChange={(e) => setAutoFillInstruction(e.target.value)}
+                  placeholder={`Examples:\n• "Summarize the title in 3-5 words"\n• "Calculate priority: High if status is urgent, otherwise Medium"\n• "Generate a brief description based on the title and tags"`}
+                  className="w-full h-32 text-sm border border-neutral-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
+                  disabled={isAutoFilling}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="skipExisting"
+                  checked={skipExisting}
+                  onChange={(e) => setSkipExisting(e.target.checked)}
+                  className="h-4 w-4 rounded border-neutral-300"
+                  disabled={isAutoFilling}
+                />
+                <label htmlFor="skipExisting" className="text-sm text-neutral-600">
+                  Only fill empty cells ({rows.filter(row => !row.properties[property.id] || row.properties[property.id] === "" || row.properties[property.id] === null).length} cells)
+                </label>
+              </div>
+
+              {autoFillProgress && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-neutral-600">Progress</span>
+                    <span className="font-medium">{autoFillProgress.current} / {autoFillProgress.total}</span>
+                  </div>
+                  <div className="w-full bg-neutral-200 rounded-full h-2">
+                    <div
+                      className="bg-gradient-to-r from-violet-500 to-purple-600 h-2 rounded-full transition-all"
+                      style={{ width: `${(autoFillProgress.current / autoFillProgress.total) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-neutral-200 flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => setShowAutoFillDialog(false)}
+                disabled={isAutoFilling}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleAutoFill}
+                disabled={isAutoFilling || !autoFillInstruction.trim()}
+                className="bg-gradient-to-r from-violet-500 to-purple-600 text-white hover:opacity-90"
+              >
+                {isAutoFilling ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Filling...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Auto-fill
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Resizer */}
       <div

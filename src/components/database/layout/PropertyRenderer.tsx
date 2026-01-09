@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { DatabaseProperty, PropertyValue, SelectOption } from "@/types";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,41 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+
+// Auto-resize textarea component
+function AutoResizeTextarea({ value, onChange, placeholder, className }: {
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+    className?: string;
+}) {
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = `${Math.max(32, textarea.scrollHeight)}px`;
+        }
+    }, [value]);
+
+    return (
+        <textarea
+            ref={textareaRef}
+            value={value || ""}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className={cn(
+                "w-full px-2 py-1 bg-transparent border border-transparent",
+                "hover:border-neutral-200 focus:border-blue-500 focus:outline-none",
+                "resize-none overflow-hidden rounded-md text-sm",
+                "min-h-[32px]",
+                className
+            )}
+            rows={1}
+        />
+    );
+}
 
 interface PropertyRendererProps {
     property: DatabaseProperty;
@@ -30,11 +65,11 @@ export function PropertyRenderer({
         case "email":
         case "phone":
             return (
-                <Input
+                <AutoResizeTextarea
                     value={(value as string) || ""}
-                    onChange={(e) => onChange(e.target.value)}
-                    className={cn("h-8 px-2 bg-transparent border-transparent hover:border-neutral-200 focus:border-blue-500", className)}
+                    onChange={(val) => onChange(val)}
                     placeholder="Empty"
+                    className={className}
                 />
             );
 

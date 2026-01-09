@@ -44,9 +44,9 @@ export function WorkspaceSwitcher() {
 
   const currentWorkspace = workspaces.find((w) => w.id === currentWorkspaceId);
 
-  const handleCreateWorkspace = () => {
+  const handleCreateWorkspace = async () => {
     if (newWorkspaceName.trim()) {
-      const workspace = createWorkspace(newWorkspaceName.trim());
+      const workspace = await createWorkspace(newWorkspaceName.trim());
       setCurrentWorkspace(workspace.id);
       setNewWorkspaceName("");
       setIsCreateOpen(false);

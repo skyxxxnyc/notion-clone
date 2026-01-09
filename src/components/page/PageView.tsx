@@ -26,6 +26,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AIToolbar,
+  GeneratePageModal,
+  GenerateTableModal,
+  SmartSuggestions,
+  type GeneratedPage,
+  type GeneratedTable,
+  type SmartSuggestion,
+} from "@/components/ai";
 
 interface PageViewProps {
   pageId: string;
@@ -41,13 +50,19 @@ export function PageView({ pageId }: PageViewProps) {
     setCurrentPage,
   } = useAppStore();
 
-  const { fetchBlocks, savePageContent, saveStatus, setSaveStatus } = useAppStore();
+  const { fetchBlocks, savePageContent, saveStatus, setSaveStatus, createPage, createDatabase } = useAppStore();
   const page = pages[pageId];
   const parentPage = page?.parentId ? pages[page.parentId] : null;
   const isDatabaseItem = parentPage?.isDatabase;
   const [editorContent, setEditorContent] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
   const [showStatus, setShowStatus] = useState(false);
+
+  // AI Feature States
+  const [selectedText, setSelectedText] = useState("");
+  const [showPageModal, setShowPageModal] = useState(false);
+  const [showTableModal, setShowTableModal] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Show status indicator when it changes, and hide after 3 seconds if saved
   useEffect(() => {
@@ -201,6 +216,116 @@ export function PageView({ pageId }: PageViewProps) {
     }
   };
 
+  // AI Feature Handlers
+  const handleTextTransform = useCallback((newText: string) => {
+    // Replace selected text in editor
+    // This would need editor instance access - for now just update content
+    setEditorContent(prev => prev.replace(selectedText, newText));
+    setSelectedText("");
+  }, [selectedText]);
+
+  const handleGeneratePage = async (generatedPage: GeneratedPage) => {
+    try {
+      // Create new page with AI-generated content
+      const newPage = await createPage(null, generatedPage.title);
+
+      // Convert sections to HTML
+      const html = generatedPage.sections.map(section => {
+        let content = section.content;
+        if (section.children) {
+          content += section.children.map(child => {
+            if (child.type === 'bulletList') {
+              return `<ul>${child.content.split('\n').map(item => `<li>${item.replace(/^[•-]\s*/, '')}</li>`).join('')}</ul>`;
+            }
+            return `<p>${child.content}</p>`;
+          }).join('');
+        }
+
+        switch (section.type) {
+          case 'heading1': return `<h1>${content}</h1>`;
+          case 'heading2': return `<h2>${content}</h2>`;
+          case 'heading3': return `<h3>${content}</h3>`;
+          case 'quote': return `<blockquote>${content}</blockquote>`;
+          case 'callout': return `<div class="callout">${content}</div>`;
+          default: return `<p>${content}</p>`;
+        }
+      }).join('');
+
+      // Update page with icon and content
+      if (generatedPage.icon) {
+        await updatePage(newPage.id, { icon: generatedPage.icon });
+      }
+
+      // Navigate to new page
+      setCurrentPage(newPage.id);
+    } catch (error) {
+      console.error('Failed to create page:', error);
+      alert('Failed to create page. Please try again.');
+    }
+  };
+
+  const handleGenerateTable = async (generatedTable: GeneratedTable) => {
+    try {
+      // Create database with AI-generated structure
+      const newDb = await createDatabase(null, generatedTable.title);
+
+      // Update database config with AI-generated properties
+      const properties = [
+        { id: 'title', name: 'Name', type: 'title' as const, isVisible: true, width: 250 },
+        ...generatedTable.properties.map((prop, idx) => ({
+          id: `prop_${idx}`,
+          name: prop.name,
+          type: prop.type as any,
+          isVisible: true,
+          width: 200,
+          options: prop.options
+        }))
+      ];
+
+      await updatePage(newDb.id, {
+        databaseConfig: {
+          properties,
+          views: [{
+            id: 'default',
+            name: 'Table',
+            type: 'table' as const,
+            filters: [],
+            sorts: [],
+            visibleProperties: properties.map(p => p.id),
+            config: {}
+          }],
+          defaultViewId: 'default'
+        }
+      });
+
+      // TODO: Create rows with generated data
+      // This would require bulk row creation
+
+      // Navigate to new database
+      setCurrentPage(newDb.id);
+    } catch (error) {
+      console.error('Failed to create database:', error);
+      alert('Failed to create database. Please try again.');
+    }
+  };
+
+  const handleApplySuggestion = useCallback((suggestion: SmartSuggestion) => {
+    switch (suggestion.type) {
+      case 'title':
+        updatePage(pageId, { title: suggestion.value });
+        break;
+      case 'tag':
+        // Add tag to page properties
+        // This would need tag property support
+        console.log('Add tag:', suggestion.value);
+        break;
+      case 'action':
+        // Could create a new task or add to a list
+        console.log('Action:', suggestion.value);
+        break;
+    }
+  }, [pageId, updatePage]);
+
   if (!page || !isLoaded) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -219,6 +344,17 @@ export function PageView({ pageId }: PageViewProps) {
         <PageBreadcrumb pageId={pageId} />
 
         <div className="flex items-center gap-2">
+          {/* AI Toolbar */}
+          {!page.isDatabase && (
+            <AIToolbar
+              selectedText={selectedText}
+              onTextTransform={handleTextTransform}
+              onGeneratePage={() => setShowPageModal(true)}
+              onGenerateTable={() => setShowTableModal(true)}
+              onShowSuggestions={() => setShowSuggestions(true)}
+            />
+          )}
+
           {saveStatus === "saving" && (
             <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-neutral-400 animate-in fade-in duration-300">
               <div className="w-2 h-2 border border-neutral-300 border-t-neutral-600 rounded-full animate-spin" />
@@ -316,6 +452,30 @@ export function PageView({ pageId }: PageViewProps) {
           </div>
         )}
       </ScrollArea>
+
+      {/* AI Modals */}
+      <GeneratePageModal
+        isOpen={showPageModal}
+        onClose={() => setShowPageModal(false)}
+        onGenerate={handleGeneratePage}
+      />
+
+      <GenerateTableModal
+        isOpen={showTableModal}
+        onClose={() => setShowTableModal(false)}
+        onGenerate={handleGenerateTable}
+      />
+
+      <SmartSuggestions
+        isOpen={showSuggestions}
+        onClose={() => setShowSuggestions(false)}
+        context={{
+          currentTitle: page.title,
+          content: editorContent.replace(/<[^>]*>/g, '').slice(0, 500),
+          pageType: page.isDatabase ? 'database' : 'page'
+        }}
+        onApplySuggestion={handleApplySuggestion}
+      />
     </div>
   );
 }

@@ -23,6 +23,7 @@ import { PageTreeItem } from "./PageTreeItem";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import { QuickSearch } from "./QuickSearch";
 import { ImportModal } from "../import/ImportModal";
+import { TemplateBrowser } from "../templates/TemplateBrowser";
 
 interface SidebarProps {
   className?: string;
@@ -45,6 +46,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   const [isResizing, setIsResizing] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [templateBrowserOpen, setTemplateBrowserOpen] = useState(false);
 
   // Get root pages (no parent)
   const rootPages = Object.values(pages).filter(
@@ -175,6 +177,13 @@ export function Sidebar({ className }: SidebarProps) {
           <Upload className="h-4 w-4" />
           <span>Import</span>
         </button>
+        <button
+          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-600 hover:bg-neutral-200/50 rounded transition-colors"
+          onClick={() => setTemplateBrowserOpen(true)}
+        >
+          <FileText className="h-4 w-4" />
+          <span>Templates</span>
+        </button>
       </div>
 
       {/* Favourites */}
@@ -249,6 +258,12 @@ export function Sidebar({ className }: SidebarProps) {
         onMouseDown={handleMouseDown}
       />
       <ImportModal open={importOpen} onOpenChange={setImportOpen} />
+      {templateBrowserOpen && currentWorkspaceId && (
+        <TemplateBrowser
+          onClose={() => setTemplateBrowserOpen(false)}
+          workspaceId={currentWorkspaceId}
+        />
+      )}
     </div>
   );
 }

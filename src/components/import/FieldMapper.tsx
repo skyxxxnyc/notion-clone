@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ImportData, FieldMapping } from "./types";
 import { PropertyType } from "@/types";
-import { Table, Crown } from "lucide-react";
+import { Table, Crown, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
     Select,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { inferPropertyTypes, type PropertySuggestion } from "@/actions/ai";
 
 interface FieldMapperProps {
     data: ImportData;
@@ -37,8 +38,12 @@ function guessType(value: any): PropertyType {
     return "text";
 }
 
+
+
 export function FieldMapper({ data, onChange }: FieldMapperProps) {
     const [mappings, setMappings] = useState<FieldMapping[]>([]);
+    const [isDetecting, setIsDetecting] = useState(false);
+    const [aiSuggestions, setAiSuggestions] = useState<Record<string, PropertySuggestion>>({});
 
     useEffect(() => {
         // Initialize mappings - auto-detect title from common names
@@ -60,6 +65,46 @@ export function FieldMapper({ data, onChange }: FieldMapperProps) {
         onChange(initialMappings);
     }, [data]); // Removed onChange from deps to avoid loops
 
+    const handleSmartDetect = async () => {
+        setIsDetecting(true);
+        try {
+            const suggestions: Record<string, PropertySuggestion> = {};
+
+            // Process each field with AI
+            for (const field of data.fields) {
+                const sampleValues = data.rows
+                    .map(row => row[field.key])
+                    .filter(v => v !== null && v !== undefined)
+                    .slice(0, 10);
+
+                const suggestion = await inferPropertyTypes(field.key, sampleValues);
+                suggestions[field.key] = suggestion;
+            }
+
+            setAiSuggestions(suggestions);
+
+            // Auto-apply suggestions
+            const newMappings = mappings.map(mapping => {
+                const suggestion = suggestions[mapping.sourceKey];
+                if (suggestion && suggestion.confidence > 0.6) {
+                    return {
+                        ...mapping,
+                        targetType: suggestion.type as PropertyType
+                    };
+                }
+                return mapping;
+            });
+
+            setMappings(newMappings);
+            onChange(newMappings);
+        } catch (error) {
+            console.error("Smart detect failed:", error);
+            alert("AI detection failed. Please try again.");
+        } finally {
+            setIsDetecting(false);
+        }
+    };
+
     const handleUpdate = (index: number, updates: Partial<FieldMapping>) => {
         const newMappings = [...mappings];
         newMappings[index] = { ...newMappings[index], ...updates };
@@ -76,12 +121,24 @@ export function FieldMapper({ data, onChange }: FieldMapperProps) {
         onChange(newMappings);
     };
 
+
+
     return (
         <div className="border border-neutral-200 rounded-lg overflow-hidden">
-            <div className="bg-neutral-50 px-4 py-3 border-b border-neutral-200 flex items-center gap-2">
-                <Table className="h-4 w-4 text-neutral-500" />
-                <span className="font-medium text-sm text-neutral-700">Map properties</span>
-                <span className="text-xs text-neutral-400 ml-2">Select which column to use as page title</span>
+            <div className="bg-neutral-50 px-4 py-3 border-b border-neutral-200 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <Table className="h-4 w-4 text-neutral-500" />
+                    <span className="font-medium text-sm text-neutral-700">Map properties</span>
+                    <span className="text-xs text-neutral-400 ml-2">Select which column to use as page title</span>
+                </div>
+                <button
+                    onClick={handleSmartDetect}
+                    disabled={isDetecting}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-medium rounded-md hover:from-red-600 hover:to-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <Sparkles className={`h-3.5 w-3.5 ${isDetecting ? 'animate-spin' : ''}`} />
+                    {isDetecting ? 'Detecting...' : 'Smart Detect'}
+                </button>
             </div>
 
             <div className="divide-y divide-neutral-200 max-h-[400px] overflow-y-auto">
@@ -105,8 +162,8 @@ export function FieldMapper({ data, onChange }: FieldMapperProps) {
                                     onClick={() => handleSetTitle(index)}
                                     disabled={!mapping.enabled}
                                     className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${mapping.isTitle
-                                            ? 'border-amber-500 bg-amber-50 text-amber-600'
-                                            : 'border-neutral-300 hover:border-neutral-400 text-transparent'
+                                        ? 'border-amber-500 bg-amber-50 text-amber-600'
+                                        : 'border-neutral-300 hover:border-neutral-400 text-transparent'
                                         } ${!mapping.enabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                                     title="Use as page title"
                                 >

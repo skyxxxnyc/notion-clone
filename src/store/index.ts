@@ -72,7 +72,7 @@ interface AppState {
 
   // Database rows
   databaseRows: Record<string, DatabaseRow[]>;
-  createDatabaseRow: (databaseId: string) => DatabaseRow;
+  createDatabaseRow: (databaseId: string) => Promise<DatabaseRow>;
   updateDatabaseRow: (
     databaseId: string,
     rowId: string,
@@ -263,7 +263,7 @@ export const useAppStore = create<AppState>()(
                       id: p.id,
                       pageId: p.id,
                       databaseId: p.parentId,
-                      properties: { ...p.properties, title: p.title } || { title: p.title },
+                      properties: p.properties ? { ...p.properties, title: p.title } : { title: p.title },
                       createdAt: p.createdAt,
                       updatedAt: p.updatedAt,
                       createdBy: p.createdBy,
@@ -499,8 +499,17 @@ export const useAppStore = create<AppState>()(
             { id: "date", name: "Date", type: "date", isVisible: true, width: 120 },
           ],
           views: [
-            { id: "1", name: "Table", type: "table" as const },
+            {
+              id: "1",
+              name: "Table",
+              type: "table" as const,
+              filters: [],
+              sorts: [],
+              visibleProperties: [],
+              config: {}
+            },
           ],
+          defaultViewId: "1"
         };
 
         set((s) => {
@@ -1085,8 +1094,8 @@ export const useAppStore = create<AppState>()(
         const newPage: Page = {
           id: newId,
           title: "Untitled",
-          icon: null,
-          coverImage: null,
+          icon: undefined,
+          coverImage: undefined,
           coverPosition: 0.5,
           parentId: databaseId,
           workspaceId: workspaceId,
@@ -1098,7 +1107,7 @@ export const useAppStore = create<AppState>()(
           isFavourite: false,
           isTemplate: false,
           isDatabase: false,
-          databaseConfig: null,
+          databaseConfig: undefined,
           blocks: [],
           children: [],
           path: [],

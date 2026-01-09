@@ -61,8 +61,8 @@ export function BoardView({ page, rows, onAddRow }: BoardViewProps) {
     });
   };
 
-  const handleAddToColumn = (statusId: string) => {
-    const newRow = createDatabaseRow(page.id);
+  const handleAddToColumn = async (statusId: string) => {
+    const newRow = await createDatabaseRow(page.id);
     updateDatabaseRow(page.id, newRow.id, {
       properties: { status: statusId },
     });
