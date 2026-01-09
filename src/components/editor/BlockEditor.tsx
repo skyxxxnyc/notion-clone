@@ -98,16 +98,16 @@ export function BlockEditor({
     editorProps: {
       attributes: {
         class: cn(
-          "prose prose-neutral max-w-none focus:outline-none",
-          "prose-headings:font-semibold prose-headings:text-neutral-900",
+          "prose prose-neutral dark:prose-invert prose-invert max-w-none focus:outline-none",
+          "prose-headings:font-semibold prose-headings:text-neutral-100",
           "prose-h1:text-4xl prose-h1:mt-8 prose-h1:mb-4",
           "prose-h2:text-2xl prose-h2:mt-6 prose-h2:mb-3",
           "prose-h3:text-xl prose-h3:mt-4 prose-h3:mb-2",
           "prose-p:my-2 prose-p:leading-relaxed",
           "prose-ul:my-2 prose-ol:my-2",
           "prose-li:my-0.5",
-          "prose-blockquote:border-l-4 prose-blockquote:border-neutral-300 prose-blockquote:pl-4 prose-blockquote:italic",
-          "prose-code:bg-neutral-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm",
+          "prose-blockquote:border-l-4 prose-blockquote:border-neutral-700 prose-blockquote:pl-4 prose-blockquote:italic",
+          "prose-code:bg-neutral-900 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:text-neutral-200",
           "min-h-[200px]"
         ),
       },

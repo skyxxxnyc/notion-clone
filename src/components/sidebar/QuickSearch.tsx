@@ -135,14 +135,14 @@ export function QuickSearch() {
         <DialogDescription className="sr-only">
           Search for pages and navigate quickly.
         </DialogDescription>
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-neutral-200">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-neutral-800">
           <Search className="h-5 w-5 text-neutral-400" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search pages..."
-            className="border-0 p-0 text-lg focus-visible:ring-0 shadow-none"
+            className="border-0 p-0 text-lg focus-visible:ring-0 shadow-none text-neutral-200 placeholder:text-neutral-500"
             autoFocus
           />
         </div>
@@ -169,8 +169,8 @@ export function QuickSearch() {
                 <button
                   key={page.id}
                   className={cn(
-                    "w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-neutral-100 transition-colors",
-                    index === selectedIndex && "bg-neutral-100"
+                    "w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-neutral-900 transition-colors",
+                    index === selectedIndex && "bg-neutral-900"
                   )}
                   onClick={() => handleSelect(page.id)}
                   onMouseEnter={() => setSelectedIndex(index)}
@@ -183,7 +183,7 @@ export function QuickSearch() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-neutral-900 truncate">
+                    <div className="text-sm font-medium text-neutral-200 truncate">
                       {page.title || "Untitled"}
                     </div>
                     {page.parentId && pages[page.parentId] && (
@@ -202,17 +202,17 @@ export function QuickSearch() {
           </div>
         </ScrollArea>
 
-        <div className="px-4 py-2 border-t border-neutral-200 text-xs text-neutral-500 flex items-center gap-4">
+        <div className="px-4 py-2 border-t border-neutral-800 text-xs text-neutral-500 flex items-center gap-4">
           <span className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 bg-neutral-100 rounded text-xs">↑↓</kbd>
+            <kbd className="px-1.5 py-0.5 bg-neutral-800 rounded text-xs">↑↓</kbd>
             to navigate
           </span>
           <span className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 bg-neutral-100 rounded text-xs">↵</kbd>
+            <kbd className="px-1.5 py-0.5 bg-neutral-800 rounded text-xs">↵</kbd>
             to select
           </span>
           <span className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 bg-neutral-100 rounded text-xs">esc</kbd>
+            <kbd className="px-1.5 py-0.5 bg-neutral-800 rounded text-xs">esc</kbd>
             to close
           </span>
         </div>

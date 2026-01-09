@@ -172,10 +172,16 @@ export function PageView({ pageId }: PageViewProps) {
               return `<ul><li>${block.content}</li></ul>`;
             case "numberedList":
               return `<ol><li>${block.content}</li></ol>`;
+            case "todoList":
+              return `<ul data-type="taskList"><li data-type="taskItem"><label><input type="checkbox"><span>${block.content}</span></label></li></ul>`;
             case "quote":
               return `<blockquote>${block.content}</blockquote>`;
             case "code":
               return `<pre><code>${block.content}</code></pre>`;
+            case "divider":
+              return `<hr />`;
+            case "image":
+              return `<img src="${block.content}" alt="Image" />`;
             default:
               return `<p>${block.content}</p>`;
           }
@@ -346,7 +352,7 @@ export function PageView({ pageId }: PageViewProps) {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Top Bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-200 bg-white">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-[#333] bg-[#0a0a0a]">
         <PageBreadcrumb pageId={pageId} />
 
         <div className="flex items-center gap-2">
@@ -362,19 +368,19 @@ export function PageView({ pageId }: PageViewProps) {
           )}
 
           {saveStatus === "saving" && (
-            <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-neutral-400 animate-in fade-in duration-300">
-              <div className="w-2 h-2 border border-neutral-300 border-t-neutral-600 rounded-full animate-spin" />
+            <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-neutral-500 animate-in fade-in duration-300">
+              <div className="w-2 h-2 border border-neutral-600 border-t-neutral-400 rounded-full animate-spin" />
               Saving...
             </div>
           )}
           {saveStatus === "saved" && showStatus && (
-            <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-green-600/70 animate-in fade-in slide-in-from-bottom-1 duration-300">
+            <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-green-500 animate-in fade-in slide-in-from-bottom-1 duration-300">
               <Check className="h-3 w-3" />
               Saved
             </div>
           )}
           {saveStatus === "unsaved" && (
-            <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-amber-600/70">
+            <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-amber-500">
               <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
               Unsaved
             </div>
@@ -383,7 +389,7 @@ export function PageView({ pageId }: PageViewProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="text-neutral-500"
+            className="text-neutral-400 hover:text-neutral-200"
           >
             Share
           </Button>

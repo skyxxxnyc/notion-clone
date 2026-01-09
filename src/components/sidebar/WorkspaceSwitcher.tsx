@@ -66,20 +66,20 @@ export function WorkspaceSwitcher() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-neutral-200/50 transition-colors">
-            <div className="w-6 h-6 rounded bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-semibold">
+          <button className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-neutral-800 transition-colors">
+            <div className="w-6 h-6 rounded-none bg-[#ccff00] border border-black flex items-center justify-center text-black text-xs font-bold font-mono">
               {currentWorkspace?.icon ||
                 currentWorkspace?.name?.charAt(0).toUpperCase() ||
                 "W"}
             </div>
-            <span className="text-sm font-medium text-neutral-700 max-w-32 truncate">
+            <span className="text-sm font-medium text-neutral-200 max-w-32 truncate">
               {currentWorkspace?.name || "Workspace"}
             </span>
             <ChevronDown className="h-4 w-4 text-neutral-400" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-72">
-          <div className="px-2 py-1.5 text-xs text-neutral-500">
+          <div className="px-2 py-1.5 text-xs text-neutral-500 font-mono uppercase">
             Your workspaces
           </div>
 
@@ -89,12 +89,12 @@ export function WorkspaceSwitcher() {
               className="flex items-center gap-2 cursor-pointer"
               onClick={() => setCurrentWorkspace(workspace.id)}
             >
-              <div className="w-6 h-6 rounded bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-semibold">
+              <div className="w-6 h-6 rounded-none bg-[#ccff00] border border-black flex items-center justify-center text-black text-xs font-bold font-mono">
                 {workspace.icon || workspace.name.charAt(0).toUpperCase()}
               </div>
-              <span className="flex-1 truncate">{workspace.name}</span>
+              <span className="flex-1 truncate text-neutral-200">{workspace.name}</span>
               {workspace.id === currentWorkspaceId && (
-                <Check className="h-4 w-4 text-blue-600" />
+                <Check className="h-4 w-4 text-[#ccff00]" />
               )}
             </DropdownMenuItem>
           ))}

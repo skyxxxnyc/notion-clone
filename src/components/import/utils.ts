@@ -135,3 +135,107 @@ function parseMD(content: string, file: File): ImportData {
         };
     }
 }
+
+// Simple inline parser for bold, italic, code, link
+function parseInline(text: string): string {
+    let html = text
+        // Bold: **text** or __text__
+        .replace(/(\*\*|__)(.*?)\1/g, '<strong>$2</strong>')
+        // Italic: *text* or _text_
+        .replace(/(\*|_)(.*?)\1/g, '<em>$2</em>')
+        // Code: `text`
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        // Link: [text](url)
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
+    return html;
+}
+
+export function markdownToBlocks(markdown: string): { type: string, content: string }[] {
+    if (!markdown) return [];
+
+    const blocks: { type: string, content: string }[] = [];
+    const lines = markdown.split('\n');
+    let inCodeBlock = false;
+    let codeBlockContent: string[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        // Handle Code Blocks
+        if (line.trim().startsWith('```')) {
+            if (inCodeBlock) {
+                blocks.push({
+                    type: 'code',
+                    content: codeBlockContent.join('\n')
+                });
+                codeBlockContent = [];
+                inCodeBlock = false;
+            } else {
+                inCodeBlock = true;
+            }
+            continue;
+        }
+
+        if (inCodeBlock) {
+            codeBlockContent.push(line);
+            continue;
+        }
+
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        // Headers
+        if (trimmed.startsWith('# ')) {
+            blocks.push({ type: 'heading1', content: parseInline(trimmed.substring(2)) });
+        } else if (trimmed.startsWith('## ')) {
+            blocks.push({ type: 'heading2', content: parseInline(trimmed.substring(3)) });
+        } else if (trimmed.startsWith('### ')) {
+            blocks.push({ type: 'heading3', content: parseInline(trimmed.substring(4)) });
+        }
+        // Lists
+        else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+            blocks.push({ type: 'bulletList', content: parseInline(trimmed.substring(2)) });
+        } else if (/^\d+\.\s/.test(trimmed)) {
+            blocks.push({ type: 'numberedList', content: parseInline(trimmed.replace(/^\d+\.\s/, '')) });
+        }
+        // Todo
+        else if (trimmed.startsWith('- [ ] ')) {
+            blocks.push({ type: 'todoList', content: parseInline(trimmed.substring(6)) });
+        } else if (trimmed.startsWith('- [x] ')) {
+            // Checkbox logic handled by TipTap usually via data attributes, 
+            // but for simple text import we just take the content.
+            blocks.push({ type: 'todoList', content: parseInline(trimmed.substring(6)) });
+        }
+        // Blockquotes
+        else if (trimmed.startsWith('> ')) {
+            blocks.push({ type: 'quote', content: parseInline(trimmed.substring(2)) });
+        }
+        // Images: ![alt](url)
+        else if (trimmed.match(/^!\[(.*?)\]\((.*?)\)$/)) {
+            const match = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
+            if (match) {
+                // Block type 'image' usually expects content to be URL or complex object?
+                // PageView seems to treat 'image' type content as src (line 119: content = node.attrs.src)
+                blocks.push({ type: 'image', content: match[2] });
+            }
+        }
+        // Horizontal Rule
+        else if (trimmed === '---' || trimmed === '***') {
+            blocks.push({ type: 'divider', content: '' });
+        }
+        // Default to Paragraph (text)
+        else {
+            blocks.push({ type: 'text', content: parseInline(trimmed) });
+        }
+    }
+
+    if (inCodeBlock && codeBlockContent.length > 0) {
+        blocks.push({
+            type: 'code',
+            content: codeBlockContent.join('\n')
+        });
+    }
+
+    return blocks;
+}

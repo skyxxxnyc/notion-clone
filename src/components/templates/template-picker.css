@@ -1,6 +1,182 @@
-/* Template Picker Modal */
+/* Template Picker Modal - Dark Neo-Brutalist */
 .template-picker-modal {
     max-width: 720px;
+    background: var(--neo-bg-main);
+    border: 1px solid var(--neo-border-color);
+}
+
+.modal-title-text {
+    font-size: 18px;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+}
+
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 24px;
+    padding: 16px 0;
+}
+
+.template-option {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    background: #0a0a0a;
+    border: 1px solid var(--neo-border-color);
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    text-align: center;
+    box-shadow: none;
+}
+
+.template-option:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: 4px 4px 0 0 #ff00ff;
+    /* Magenta for consistency with dash */
+    border-color: #ff00ff;
+    background: #000;
+}
+
+.template-option.selected {
+    border-color: var(--neo-accent-primary);
+    box-shadow: 4px 4px 0 0 var(--neo-accent-primary);
+}
+
+.template-check {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--neo-accent-primary);
+    border: 1px solid #000;
+    border-radius: 0;
+    color: #000;
+}
+
+.template-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    filter: none;
+    color: #fff;
+}
+
+.template-option:hover .template-icon {
+    color: #ff00ff;
+}
+
+.template-option.selected .template-icon {
+    color: var(--neo-accent-primary);
+}
+
+.template-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+}
+
+.template-description {
+    font-size: 12px;
+    color: #777;
+    line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+    .template-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.modal-title-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+}
+
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 8px 0;
+}
+
+.template-option {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    background: var(--clay-bg-card);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    box-shadow: 6px 6px 14px rgba(0, 0, 0, 0.2), -6px -6px 14px rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.template-option:hover {
+    transform: translateY(-4px);
+    box-shadow: 8px 8px 18px rgba(0, 0, 0, 0.25), -8px -8px 18px rgba(255, 255, 255, 0.03);
+}
+
+.template-option.selected {
+    border-color: #ef4444;
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.2), inset -4px -4px 8px rgba(255, 255, 255, 0.02);
+}
+
+.template-check {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ef4444;
+    border-radius: 50%;
+    color: white;
+    filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.4));
+}
+
+.template-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+}
+
+.template-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 6px;
+}
+
+.template-description {
+    font-size: 12px;
+    color: var(--clay-text-muted);
+    line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+    .template-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .modal-title-text {

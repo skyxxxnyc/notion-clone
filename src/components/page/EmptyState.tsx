@@ -32,17 +32,17 @@ export function EmptyState() {
   return (
     <div className="flex-1 flex items-center justify-center p-8">
       <div className="max-w-md text-center">
-        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-neutral-100 flex items-center justify-center">
+        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-neutral-900 flex items-center justify-center">
           <FileText className="h-8 w-8 text-neutral-400" />
         </div>
 
-        <h2 className="text-2xl font-semibold text-neutral-900 mb-2">
+        <h2 className="text-2xl font-semibold text-neutral-200 mb-2">
           {currentWorkspace
             ? `Welcome to ${currentWorkspace.name}`
             : "Welcome to Notion Clone"}
         </h2>
 
-        <p className="text-neutral-500 mb-8">
+        <p className="text-neutral-400 mb-8">
           Get started by creating your first page. You can add text, images,
           lists, and much more.
         </p>
@@ -65,8 +65,8 @@ export function EmptyState() {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-neutral-200">
-          <h3 className="text-sm font-medium text-neutral-700 mb-4">
+        <div className="mt-8 pt-8 border-t border-[#333]">
+          <h3 className="text-sm font-medium text-neutral-400 mb-4">
             Templates
           </h3>
           <div className="grid grid-cols-2 gap-3">
@@ -78,12 +78,12 @@ export function EmptyState() {
             ].map((template) => (
               <button
                 key={template.name}
-                className="flex items-start gap-3 p-3 rounded-lg border border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50 transition-colors text-left"
+                className="flex items-start gap-3 p-3 rounded-lg border border-[#333] hover:border-[#ccff00] hover:bg-neutral-900 transition-colors text-left group"
                 onClick={handleCreatePage}
               >
                 <span className="text-2xl">{template.icon}</span>
                 <div>
-                  <div className="text-sm font-medium text-neutral-900">
+                  <div className="text-sm font-medium text-neutral-200 group-hover:text-[#ccff00]">
                     {template.name}
                   </div>
                   <div className="text-xs text-neutral-500">

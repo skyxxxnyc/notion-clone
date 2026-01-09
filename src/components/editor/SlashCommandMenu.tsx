@@ -301,13 +301,13 @@ export function SlashCommandMenu({ editor }: SlashCommandMenuProps) {
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 w-72 bg-white rounded-lg shadow-lg border border-neutral-200 overflow-hidden"
+      className="fixed z-50 w-72 bg-[#0a0a0a] rounded-lg shadow-lg border border-[#333] overflow-hidden"
       style={{
         top: position.top,
         left: position.left,
       }}
     >
-      <div className="p-2 text-xs text-neutral-500 border-b border-neutral-100">
+      <div className="p-2 text-xs text-neutral-500 border-b border-[#333]">
         Basic blocks
       </div>
       <div className="max-h-80 overflow-y-auto">
@@ -315,8 +315,8 @@ export function SlashCommandMenu({ editor }: SlashCommandMenuProps) {
           <button
             key={item.title}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-neutral-100 transition-colors",
-              index === selectedIndex && "bg-neutral-100"
+              "w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-neutral-900 transition-colors",
+              index === selectedIndex && "bg-neutral-900"
             )}
             onClick={() => {
               const { from } = editor.state.selection;
@@ -333,11 +333,15 @@ export function SlashCommandMenu({ editor }: SlashCommandMenuProps) {
             }}
             onMouseEnter={() => setSelectedIndex(index)}
           >
-            <div className="flex items-center justify-center w-10 h-10 rounded bg-white border border-neutral-200">
-              {item.icon}
+            <div className="flex items-center justify-center w-10 h-10 rounded bg-[#0a0a0a] border border-[#333]">
+              {item.title === "Ask AI" ? (
+                <Sparkles className="h-4 w-4 text-[#ccff00]" />
+              ) : (
+                React.cloneElement(item.icon as React.ReactElement, { className: "h-4 w-4 text-neutral-400" })
+              )}
             </div>
             <div>
-              <div className="text-sm font-medium text-neutral-900">
+              <div className="text-sm font-medium text-neutral-200">
                 {item.title}
               </div>
               <div className="text-xs text-neutral-500">{item.description}</div>

@@ -12,7 +12,7 @@ interface TemplateBrowserProps {
 }
 
 export function TemplateBrowser({ onClose, workspaceId }: TemplateBrowserProps) {
-    const { createDatabase, updatePage, setCurrentPage } = useAppStore();
+    const { createDatabase, createPage, updatePage, setCurrentPage, savePageContent } = useAppStore();
     const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | "all">("all");
     const [searchQuery, setSearchQuery] = useState("");
     const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
@@ -26,19 +26,39 @@ export function TemplateBrowser({ onClose, workspaceId }: TemplateBrowserProps) 
 
     const handleUseTemplate = async (template: Template) => {
         try {
-            // Create a new database page with the template's configuration
-            const newDatabase = await createDatabase(null, template.name);
+            let newPageId: string;
 
-            // Update the database with the template's configuration
-            await updatePage(newDatabase.id, {
-                icon: template.icon,
-                databaseConfig: {
-                    ...template.databaseConfig,
-                    layout: template.layout
+            if (template.type === "page") {
+                // Create a standalone page
+                const newPage = await createPage(null, template.name);
+                newPageId = newPage.id;
+
+                // Populate initial content if available
+                if (template.initialBlocks) {
+                    await savePageContent(newPageId, template.initialBlocks);
                 }
+            } else {
+                // Create a new database page with the template's configuration
+                const newDatabase = await createDatabase(null, template.name);
+                newPageId = newDatabase.id;
+
+                // Update the database with the template's configuration
+                if (template.databaseConfig) {
+                    await updatePage(newPageId, {
+                        databaseConfig: {
+                            ...template.databaseConfig,
+                            layout: template.layout || "table" // Fallback layout
+                        }
+                    });
+                }
+            }
+
+            // Common updates (Icon)
+            await updatePage(newPageId, {
+                icon: template.icon,
             });
 
-            setCurrentPage(newDatabase.id);
+            setCurrentPage(newPageId);
             onClose();
         } catch (error) {
             console.error("Failed to create template:", error);
@@ -47,25 +67,25 @@ export function TemplateBrowser({ onClose, workspaceId }: TemplateBrowserProps) 
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col">
+            <div className="bg-[#0a0a0a] rounded-lg shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col border border-[#333]">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-[#333]">
                     <div>
-                        <h2 className="text-xl font-semibold text-neutral-900">Template Library</h2>
+                        <h2 className="text-xl font-semibold text-neutral-200">Template Library</h2>
                         <p className="text-sm text-neutral-500 mt-1">
                             Choose a pre-built template to get started quickly
                         </p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-neutral-400 hover:text-neutral-600 transition-colors"
+                        className="text-neutral-400 hover:text-neutral-200 transition-colors"
                     >
                         <X className="h-5 w-5" />
                     </button>
                 </div>
 
                 {/* Search and Categories */}
-                <div className="px-6 py-4 border-b border-neutral-200">
+                <div className="px-6 py-4 border-b border-[#333]">
                     <div className="relative mb-4">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
                         <Input
@@ -83,8 +103,8 @@ export function TemplateBrowser({ onClose, workspaceId }: TemplateBrowserProps) 
                             className={cn(
                                 "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                                 selectedCategory === "all"
-                                    ? "bg-blue-100 text-blue-700"
-                                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                                    ? "bg-neutral-800 border border-[#ccff00] text-[#ccff00]"
+                                    : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
                             )}
                         >
                             All Templates
@@ -96,11 +116,12 @@ export function TemplateBrowser({ onClose, workspaceId }: TemplateBrowserProps) 
                                 className={cn(
                                     "px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2",
                                     selectedCategory === category.id
-                                        ? "text-white"
-                                        : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                                        ? "bg-neutral-800 border border-[#ccff00] text-[#ccff00]"
+                                        : "bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
                                 )}
                                 style={{
-                                    backgroundColor: selectedCategory === category.id ? category.color : undefined
+                                    borderColor: selectedCategory === category.id ? category.color : undefined,
+                                    color: selectedCategory === category.id ? category.color : undefined
                                 }}
                             >
                                 <span>{category.icon}</span>
@@ -118,18 +139,18 @@ export function TemplateBrowser({ onClose, workspaceId }: TemplateBrowserProps) 
                             return (
                                 <div
                                     key={template.id}
-                                    className="group border border-neutral-200 rounded-lg p-5 hover:border-neutral-300 hover:shadow-lg transition-all cursor-pointer bg-white"
+                                    className="group border border-[#333] rounded-lg p-5 hover:border-[#ccff00] hover:shadow-lg transition-all cursor-pointer bg-[#0a0a0a]"
                                     onClick={() => setPreviewTemplate(template)}
                                 >
                                     <div className="flex items-start gap-3 mb-3">
                                         <div
-                                            className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl shrink-0"
-                                            style={{ backgroundColor: template.color + "20" }}
+                                            className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl shrink-0 border border-[#333]"
+                                            style={{ backgroundColor: "#111", color: template.color }}
                                         >
                                             {template.icon}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-neutral-900 mb-1 group-hover:text-blue-600 transition-colors">
+                                            <h3 className="font-semibold text-neutral-200 mb-1 group-hover:text-[#ccff00] transition-colors">
                                                 {template.name}
                                             </h3>
                                             {category && (
@@ -140,12 +161,16 @@ export function TemplateBrowser({ onClose, workspaceId }: TemplateBrowserProps) 
                                             )}
                                         </div>
                                     </div>
-                                    <p className="text-sm text-neutral-600 line-clamp-2 mb-4">
+                                    <p className="text-sm text-neutral-400 line-clamp-2 mb-4">
                                         {template.description}
                                     </p>
                                     <div className="flex items-center justify-between">
                                         <div className="text-xs text-neutral-500">
-                                            {template.databaseConfig.properties.length} properties
+                                            {template.type === "page" ? (
+                                                <span>Page Layout</span>
+                                            ) : (
+                                                <span>{template.databaseConfig?.properties.length || 0} properties</span>
+                                            )}
                                         </div>
                                         <Button
                                             size="sm"
@@ -181,19 +206,19 @@ export function TemplateBrowser({ onClose, workspaceId }: TemplateBrowserProps) 
                     onClick={() => setPreviewTemplate(null)}
                 >
                     <div
-                        className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                        className="bg-[#0a0a0a] rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-[#333]"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="sticky top-0 bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
+                        <div className="sticky top-0 bg-[#0a0a0a] border-b border-[#333] px-6 py-4 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div
-                                    className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
-                                    style={{ backgroundColor: previewTemplate.color + "20" }}
+                                    className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl border border-[#333]"
+                                    style={{ backgroundColor: "#111", color: previewTemplate.color }}
                                 >
                                     {previewTemplate.icon}
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-lg text-neutral-900">
+                                    <h3 className="font-semibold text-lg text-neutral-200">
                                         {previewTemplate.name}
                                     </h3>
                                     <p className="text-sm text-neutral-500">
@@ -203,7 +228,7 @@ export function TemplateBrowser({ onClose, workspaceId }: TemplateBrowserProps) 
                             </div>
                             <button
                                 onClick={() => setPreviewTemplate(null)}
-                                className="text-neutral-400 hover:text-neutral-600"
+                                className="text-neutral-400 hover:text-neutral-200"
                             >
                                 <X className="h-5 w-5" />
                             </button>
@@ -211,45 +236,56 @@ export function TemplateBrowser({ onClose, workspaceId }: TemplateBrowserProps) 
 
                         <div className="p-6">
                             <div className="mb-6">
-                                <h4 className="font-medium text-neutral-900 mb-2">Description</h4>
-                                <p className="text-neutral-600">{previewTemplate.description}</p>
+                                <h4 className="font-medium text-neutral-200 mb-2">Description</h4>
+                                <p className="text-neutral-400">{previewTemplate.description}</p>
                             </div>
 
-                            <div className="mb-6">
-                                <h4 className="font-medium text-neutral-900 mb-3">Properties</h4>
-                                <div className="space-y-2">
-                                    {previewTemplate.databaseConfig.properties.map((prop) => (
-                                        <div
-                                            key={prop.id}
-                                            className="flex items-center justify-between px-3 py-2 bg-neutral-50 rounded-md"
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full bg-blue-500" />
-                                                <span className="font-medium text-sm text-neutral-900">
-                                                    {prop.name}
-                                                </span>
-                                            </div>
-                                            <span className="text-xs text-neutral-500 capitalize">
-                                                {prop.type}
-                                            </span>
-                                        </div>
-                                    ))}
+                            {previewTemplate.type === "page" ? (
+                                <div className="mb-6">
+                                    <h4 className="font-medium text-neutral-200 mb-3">Content Layout</h4>
+                                    <div className="p-4 bg-neutral-900 border border-[#333] rounded-md text-sm text-neutral-400 italic">
+                                        This template creates a page with a pre-configured content structure.
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <>
+                                    <div className="mb-6">
+                                        <h4 className="font-medium text-neutral-200 mb-3">Properties</h4>
+                                        <div className="space-y-2">
+                                            {previewTemplate.databaseConfig?.properties.map((prop) => (
+                                                <div
+                                                    key={prop.id}
+                                                    className="flex items-center justify-between px-3 py-2 bg-neutral-900 border border-[#333] rounded-md"
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-2 h-2 rounded-full bg-blue-500" />
+                                                        <span className="font-medium text-sm text-neutral-200">
+                                                            {prop.name}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-xs text-neutral-500 capitalize">
+                                                        {prop.type}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
 
-                            <div className="mb-6">
-                                <h4 className="font-medium text-neutral-900 mb-3">Views</h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {previewTemplate.databaseConfig.views.map((view) => (
-                                        <div
-                                            key={view.id}
-                                            className="px-3 py-1.5 bg-neutral-100 rounded-md text-sm text-neutral-700 capitalize"
-                                        >
-                                            {view.type}
+                                    <div className="mb-6">
+                                        <h4 className="font-medium text-neutral-200 mb-3">Views</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                            {previewTemplate.databaseConfig?.views.map((view) => (
+                                                <div
+                                                    key={view.id}
+                                                    className="px-3 py-1.5 bg-neutral-900 border border-[#333] rounded-md text-sm text-neutral-400 capitalize"
+                                                >
+                                                    {view.type}
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
+                                    </div>
+                                </>
+                            )}
 
                             <div className="flex gap-3">
                                 <Button

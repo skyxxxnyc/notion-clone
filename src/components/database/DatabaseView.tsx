@@ -140,20 +140,20 @@ export function DatabaseView({ page }: DatabaseViewProps) {
   return (
     <div className="flex-1 flex flex-col">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-200">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-800">
         <div className="flex items-center gap-2">
           {/* View Tabs */}
-          <div className="flex items-center gap-1 bg-neutral-100 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-neutral-900 rounded-sm p-1">
             {(["table", "board", "calendar", "gallery", "list"] as DatabaseViewType[]).map(
               (viewType) => (
                 <button
                   key={viewType}
                   onClick={() => setCurrentViewType(viewType)}
                   className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1 rounded text-sm capitalize transition-colors",
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-sm capitalize transition-colors",
                     currentViewType === viewType
-                      ? "bg-white shadow-sm text-neutral-900"
-                      : "text-neutral-600 hover:text-neutral-900"
+                      ? "bg-neutral-800 shadow-sm text-neutral-100"
+                      : "text-neutral-400 hover:text-neutral-200"
                   )}
                 >
                   {VIEW_ICONS[viewType]}
@@ -166,7 +166,7 @@ export function DatabaseView({ page }: DatabaseViewProps) {
           {/* Add View */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800">
                 <Plus className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -189,13 +189,13 @@ export function DatabaseView({ page }: DatabaseViewProps) {
         <div className="flex items-center gap-2">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500" />
             <input
               type="text"
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-40 pl-8 pr-3 py-1.5 text-sm border border-neutral-200 rounded-md focus:outline-none focus:ring-1 focus:ring-neutral-400"
+              className="w-40 pl-8 pr-3 py-1.5 text-sm bg-neutral-900 border border-neutral-800 text-neutral-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-neutral-700 placeholder:text-neutral-600"
             />
           </div>
 

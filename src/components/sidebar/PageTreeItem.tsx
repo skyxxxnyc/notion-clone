@@ -105,15 +105,15 @@ export function PageTreeItem({ page, level }: PageTreeItemProps) {
             className={cn(
               "group flex items-center gap-1 px-2 py-1 rounded cursor-pointer transition-colors",
               isActive
-                ? "bg-neutral-200"
-                : "hover:bg-neutral-100"
+                ? "bg-neutral-800"
+                : "hover:bg-neutral-900"
             )}
             style={{ paddingLeft: `${level * 12 + 8}px` }}
             onClick={handleClick}
           >
             <button
               className={cn(
-                "p-0.5 rounded hover:bg-neutral-200 transition-colors",
+                "p-0.5 rounded hover:bg-neutral-800 transition-colors",
                 !hasChildren && "invisible"
               )}
               onClick={handleToggleExpand}
@@ -130,13 +130,13 @@ export function PageTreeItem({ page, level }: PageTreeItemProps) {
               {typeof pageIcon === "string" ? pageIcon : pageIcon}
             </span>
 
-            <span className="flex-1 text-sm text-neutral-700 truncate">
+            <span className="flex-1 text-sm text-neutral-200 truncate">
               {page.title || "Untitled"}
             </span>
 
             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
-                className="p-1 rounded hover:bg-neutral-200 transition-colors"
+                className="p-1 rounded hover:bg-neutral-800 transition-colors"
                 onClick={handleAddSubpage}
                 title="Add subpage"
               >
@@ -146,7 +146,7 @@ export function PageTreeItem({ page, level }: PageTreeItemProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="p-1 rounded hover:bg-neutral-200 transition-colors"
+                    className="p-1 rounded hover:bg-neutral-800 transition-colors"
                     onClick={(e) => e.stopPropagation()}
                     title="More options"
                   >

@@ -110,14 +110,14 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <div
       className={cn(
-        "flex flex-col h-full bg-neutral-50 border-r border-neutral-200 relative",
+        "flex flex-col h-full bg-[#0a0a0a] border-r border-[#333] relative",
         isResizing && "select-none",
         className
       )}
       style={{ width: sidebarWidth }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-2 border-b border-neutral-200">
+      <div className="flex items-center justify-between p-2 border-b border-[#333]">
         <WorkspaceSwitcher />
         <div className="flex items-center gap-1">
           <Button
@@ -125,6 +125,7 @@ export function Sidebar({ className }: SidebarProps) {
             size="iconSm"
             onClick={() => setSearchOpen(true)}
             title="Search"
+            className="text-neutral-400 hover:text-neutral-200"
           >
             <Search className="h-4 w-4" />
           </Button>
@@ -133,6 +134,7 @@ export function Sidebar({ className }: SidebarProps) {
             size="iconSm"
             onClick={toggleSidebar}
             title="Close sidebar"
+            className="text-neutral-400 hover:text-neutral-200"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -142,43 +144,43 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Quick Actions */}
       <div className="p-2 space-y-0.5">
         <button
-          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-600 hover:bg-neutral-200/50 rounded transition-colors"
+          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded transition-colors"
           onClick={() => setSearchOpen(true)}
         >
           <Search className="h-4 w-4" />
           <span>Quick Search</span>
-          <span className="ml-auto text-xs text-neutral-400">⌘K</span>
+          <span className="ml-auto text-xs text-neutral-500">⌘K</span>
         </button>
         <button
-          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-600 hover:bg-neutral-200/50 rounded transition-colors"
+          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded transition-colors"
           onClick={() => setSettingsOpen(true)}
         >
           <Settings className="h-4 w-4" />
           <span>Settings</span>
         </button>
         <button
-          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-600 hover:bg-neutral-200/50 rounded transition-colors"
+          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded transition-colors"
           onClick={handleNewPage}
         >
           <Plus className="h-4 w-4" />
           <span>New Page</span>
         </button>
         <button
-          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-600 hover:bg-neutral-200/50 rounded transition-colors"
+          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded transition-colors"
           onClick={handleNewDatabase}
         >
           <Table className="h-4 w-4" />
           <span>New Database</span>
         </button>
         <button
-          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-600 hover:bg-neutral-200/50 rounded transition-colors"
+          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded transition-colors"
           onClick={() => setImportOpen(true)}
         >
           <Upload className="h-4 w-4" />
           <span>Import</span>
         </button>
         <button
-          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-600 hover:bg-neutral-200/50 rounded transition-colors"
+          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded transition-colors"
           onClick={() => setTemplateBrowserOpen(true)}
         >
           <FileText className="h-4 w-4" />
@@ -212,6 +214,7 @@ export function Sidebar({ className }: SidebarProps) {
             size="iconSm"
             onClick={handleNewPage}
             title="Add page"
+            className="text-neutral-400 hover:text-neutral-200"
           >
             <Plus className="h-3 w-3" />
           </Button>
@@ -224,7 +227,7 @@ export function Sidebar({ className }: SidebarProps) {
                 variant="ghost"
                 size="sm"
                 onClick={handleNewPage}
-                className="mt-2"
+                className="mt-2 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800"
               >
                 <Plus className="h-4 w-4 mr-1" />
                 Create a page
@@ -239,9 +242,9 @@ export function Sidebar({ className }: SidebarProps) {
       </ScrollArea>
 
       {/* Footer */}
-      <div className="p-2 border-t border-neutral-200">
+      <div className="p-2 border-t border-[#333]">
         <button
-          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-500 hover:bg-neutral-200/50 rounded transition-colors"
+          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded transition-colors"
           onClick={handleNewPage}
         >
           <Plus className="h-4 w-4" />
@@ -252,8 +255,8 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Resize Handle */}
       <div
         className={cn(
-          "absolute right-0 top-0 w-1 h-full cursor-col-resize hover:bg-blue-500/50 transition-colors",
-          isResizing && "bg-blue-500"
+          "absolute right-0 top-0 w-1 h-full cursor-col-resize hover:bg-[#333] transition-colors",
+          isResizing && "bg-[#333]"
         )}
         onMouseDown={handleMouseDown}
       />

@@ -207,12 +207,12 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
         onDragEnd={handleDragEnd}
       >
         {/* Header Row */}
-        <div className="flex border-b border-neutral-200 bg-neutral-50 sticky top-0 z-10">
-          <div className="w-8 flex-shrink-0 border-r border-neutral-200" /> {/* Row Drag handle column */}
-          <div className="w-8 flex-shrink-0 flex items-center justify-center border-r border-neutral-200 bg-neutral-50">
+        <div className="flex border-b border-neutral-800 bg-neutral-900 sticky top-0 z-10">
+          <div className="w-8 flex-shrink-0 border-r border-neutral-800" /> {/* Row Drag handle column */}
+          <div className="w-8 flex-shrink-0 flex items-center justify-center border-r border-neutral-800 bg-neutral-900">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-neutral-300"
+              className="h-4 w-4 rounded border-neutral-600 bg-transparent"
               checked={rows.length > 0 && selectedRowIds.size === rows.length}
               ref={input => { if (input) input.indeterminate = selectedRowIds.size > 0 && selectedRowIds.size < rows.length; }}
               onChange={handleSelectAll}
@@ -237,8 +237,8 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
             ))}
           </SortableContext>
 
-          <div className="flex-1 flex items-center px-2 min-w-[50px] border-l border-neutral-200">
-            <Button variant="ghost" size="sm" className="text-neutral-500" onClick={handleAddProperty}>
+          <div className="flex-1 flex items-center px-2 min-w-[50px] border-l border-neutral-800">
+            <Button variant="ghost" size="sm" className="text-neutral-500 hover:text-neutral-200" onClick={handleAddProperty}>
               <Plus className="h-4 w-4" />
             </Button>
           </div>
@@ -249,7 +249,7 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
           {rows.length === 0 ? (
             <div className="px-4 py-8 text-center text-neutral-500">
               <p>No data yet</p>
-              <Button variant="ghost" size="sm" onClick={onAddRow} className="mt-2">
+              <Button variant="ghost" size="sm" onClick={onAddRow} className="mt-2 hover:bg-neutral-800">
                 <Plus className="h-4 w-4 mr-1" />
                 Add row
               </Button>
@@ -258,18 +258,18 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
             rows.map((row) => (
               <div
                 key={row.id}
-                className="flex border-b border-neutral-100 hover:bg-neutral-50 group"
+                className="flex border-b border-neutral-800 hover:bg-neutral-900 group"
               >
                 {/* Row Drag Handle */}
-                <div className="w-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 cursor-grab border-r border-transparent group-hover:border-neutral-200">
-                  <GripVertical className="h-4 w-4 text-neutral-400" />
+                <div className="w-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 cursor-grab border-r border-transparent group-hover:border-neutral-800">
+                  <GripVertical className="h-4 w-4 text-neutral-500" />
                 </div>
 
                 {/* Selection Checkbox */}
-                <div className="w-8 flex items-center justify-center border-r border-transparent group-hover:border-neutral-200 flex-shrink-0">
+                <div className="w-8 flex items-center justify-center border-r border-transparent group-hover:border-neutral-800 flex-shrink-0">
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-neutral-300 opacity-0 group-hover:opacity-100 data-[checked=true]:opacity-100 transition-opacity"
+                    className="h-4 w-4 rounded border-neutral-600 bg-transparent opacity-0 group-hover:opacity-100 data-[checked=true]:opacity-100 transition-opacity"
                     checked={selectedRowIds.has(row.id)}
                     data-checked={selectedRowIds.has(row.id)}
                     onChange={(e) => {
@@ -286,8 +286,8 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
                   <div
                     key={property.id}
                     className={cn(
-                      "flex items-center px-2 py-1.5 border-r border-neutral-100 overflow-hidden",
-                      highlightedPropertyId === property.id && "bg-blue-50/50"
+                      "flex items-center px-2 py-1.5 border-r border-neutral-800 overflow-hidden",
+                      highlightedPropertyId === property.id && "bg-neutral-800/50"
                     )}
                     style={{ width: property.width || 150, minWidth: property.width || 150 }}
                   >
@@ -514,8 +514,8 @@ function SortableHeader({ property, onUpdate, onDelete, isHighlighted, onToggleH
       ref={setNodeRef}
       style={{ ...style, width: localWidth || style.width, minWidth: localWidth || style.minWidth }}
       className={cn(
-        "flex items-center gap-1 px-2 py-2 border-r border-neutral-200 text-sm font-medium text-neutral-700 relative group h-[37px]",
-        isHighlighted ? "bg-blue-100/50" : "bg-neutral-50"
+        "flex items-center gap-1 px-2 py-2 border-r border-neutral-800 text-sm font-medium text-neutral-200 relative group h-[37px]",
+        isHighlighted ? "bg-neutral-800" : "bg-neutral-900"
       )}
     >
       <div
@@ -529,7 +529,7 @@ function SortableHeader({ property, onUpdate, onDelete, isHighlighted, onToggleH
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div className="p-0.5 rounded hover:bg-neutral-200 cursor-pointer text-neutral-400">
+          <div className="p-0.5 rounded hover:bg-neutral-800 cursor-pointer text-neutral-400">
             <ChevronDown className="h-3 w-3" />
           </div>
         </DropdownMenuTrigger>

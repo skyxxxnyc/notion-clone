@@ -205,13 +205,13 @@ export function PageHeader({
             onChange={(e) => onTitleChange(e.target.value)}
             onBlur={() => setIsEditingTitle(false)}
             onKeyDown={handleTitleKeyDown}
-            className="w-full text-4xl font-bold text-neutral-900 bg-transparent border-none outline-none resize-none overflow-hidden"
+            className="w-full text-4xl font-bold text-neutral-100 bg-transparent border-none outline-none resize-none overflow-hidden"
             placeholder="Untitled"
             rows={1}
           />
         ) : (
           <h1
-            className="text-4xl font-bold text-neutral-900 cursor-text hover:bg-neutral-50 rounded px-1 -mx-1 transition-colors"
+            className="text-4xl font-bold text-neutral-100 cursor-text hover:bg-neutral-800 rounded px-1 -mx-1 transition-colors"
             onClick={() => setIsEditingTitle(true)}
           >
             {page.title || "Untitled"}
@@ -226,7 +226,7 @@ export function PageHeader({
             className="absolute inset-0 bg-black/50"
             onClick={() => setShowCoverPicker(false)}
           />
-          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-2xl p-6">
+          <div className="relative bg-[#0a0a0a] border border-[#333] w-full max-w-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Add cover</h3>
               <Button

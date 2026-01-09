@@ -59,7 +59,7 @@ export function AppLayout() {
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen bg-white overflow-hidden">
+      <div className="flex h-screen bg-[#0a0a0a] overflow-hidden">
         {/* Sidebar */}
         <Sidebar />
 

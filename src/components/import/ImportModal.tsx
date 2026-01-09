@@ -11,10 +11,10 @@ import { Button } from "@/components/ui/button";
 import { ImportPreview } from "./ImportPreview";
 import { FileUploader } from "./FileUploader";
 import { FieldMapper } from "./FieldMapper";
-import { parseFile } from "./utils";
+import { parseFile, markdownToBlocks } from "./utils";
 import { ImportData, FieldMapping } from "./types";
 import { useAppStore } from "@/store";
-import { DatabaseProperty } from "@/types";
+import { DatabaseProperty, BlockType } from "@/types";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { generateId } from "@/lib/utils";
 import { bulkCreatePages } from "@/actions/pages";
@@ -29,13 +29,48 @@ export function ImportModal({ open, onOpenChange }: ImportModalProps) {
     const [importData, setImportData] = useState<ImportData | null>(null);
     const [mappings, setMappings] = useState<FieldMapping[]>([]);
     const [isImporting, setIsImporting] = useState(false);
-    const { createDatabase, updatePage, addPages } = useAppStore();
+    const { createDatabase, updatePage, addPages, createPage, createBlock, setCurrentPage } = useAppStore();
+
+    const importMarkdown = async (data: ImportData) => {
+        try {
+            const title = data.fileName.replace(/\.[^/.]+$/, "");
+            const newPage = await createPage(null, title);
+
+            if (data.content) {
+                const blocks = markdownToBlocks(data.content);
+                for (const [index, block] of blocks.entries()) {
+                    await createBlock(
+                        newPage.id,
+                        block.type as BlockType,
+                        block.content,
+                        null,
+                        index
+                    );
+                }
+            }
+
+            setCurrentPage(newPage.id);
+            onOpenChange(false);
+            setStep("upload");
+        } catch (error) {
+            console.error("Markdown import failed", error);
+            alert("Failed to import markdown file");
+        } finally {
+            setIsImporting(false);
+        }
+    };
 
     const handleFileSelect = async (file: File) => {
         try {
             const data = await parseFile(file);
             setImportData(data);
-            setStep("map");
+
+            if (data.fileType === 'md') {
+                setIsImporting(true);
+                await importMarkdown(data);
+            } else {
+                setStep("map");
+            }
         } catch (error) {
             console.error("Parse failed", error);
             alert("Failed to parse file");

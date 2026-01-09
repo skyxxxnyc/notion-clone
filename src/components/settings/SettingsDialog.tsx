@@ -79,7 +79,7 @@ export function SettingsDialog() {
         </DialogDescription>
         <div className="flex h-full">
           {/* Sidebar */}
-          <div className="w-56 border-r border-neutral-200 bg-neutral-50 p-4">
+          <div className="w-56 border-r border-[#333] bg-[#0a0a0a] p-4">
             <nav className="space-y-1">
               {SETTINGS_SECTIONS.map((section) => (
                 <button
@@ -88,8 +88,8 @@ export function SettingsDialog() {
                   className={cn(
                     "w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors",
                     activeSection === section.id
-                      ? "bg-white shadow-sm text-neutral-900"
-                      : "text-neutral-600 hover:bg-neutral-100"
+                      ? "bg-neutral-800 shadow-sm text-neutral-200"
+                      : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200"
                   )}
                 >
                   <section.icon className="h-4 w-4" />
@@ -108,7 +108,7 @@ export function SettingsDialog() {
 
                   {/* Profile Photo */}
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-semibold">
+                    <div className="w-16 h-16 rounded-full bg-[#ccff00] border border-black flex items-center justify-center text-black text-2xl font-bold font-mono">
                       {currentUser?.name?.charAt(0) || "U"}
                     </div>
                     <div>
@@ -124,13 +124,13 @@ export function SettingsDialog() {
                   {/* Profile Info */}
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-200 mb-1">
                         Full name
                       </label>
                       <Input defaultValue={currentUser?.name || ""} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-200 mb-1">
                         Email
                       </label>
                       <Input defaultValue={currentUser?.email || ""} type="email" />
@@ -138,7 +138,7 @@ export function SettingsDialog() {
                   </div>
                 </div>
 
-                <div className="border-t border-neutral-200 pt-6">
+                <div className="border-t border-[#333] pt-6">
                   <Button
                     variant="outline"
                     className="w-full justify-center"
@@ -182,7 +182,7 @@ export function SettingsDialog() {
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-200 mb-1">
                         Workspace name
                       </label>
                       <Input
@@ -198,11 +198,11 @@ export function SettingsDialog() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-1">
+                      <label className="block text-sm font-medium text-neutral-200 mb-1">
                         Workspace icon
                       </label>
                       <div className="flex items-center gap-2">
-                        <div className="w-12 h-12 rounded bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl font-semibold">
+                        <div className="w-12 h-12 rounded bg-[#ccff00] border border-black flex items-center justify-center text-black text-xl font-bold font-mono">
                           {currentWorkspace?.icon ||
                             currentWorkspace?.name?.charAt(0) ||
                             "W"}
@@ -215,7 +215,7 @@ export function SettingsDialog() {
                   </div>
                 </div>
 
-                <div className="border-t border-neutral-200 pt-6">
+                <div className="border-t border-[#333] pt-6">
                   <h3 className="text-sm font-semibold mb-4">Members</h3>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between py-2">
@@ -281,7 +281,7 @@ export function SettingsDialog() {
                 <h2 className="text-lg font-semibold mb-4">Appearance</h2>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-3">
+                  <label className="block text-sm font-medium text-neutral-200 mb-3">
                     Theme
                   </label>
                   <div className="grid grid-cols-3 gap-3">
@@ -292,11 +292,11 @@ export function SettingsDialog() {
                     ].map((theme) => (
                       <button
                         key={theme.id}
-                        className="p-3 border border-neutral-200 rounded-lg hover:border-neutral-400 transition-colors"
+                        className="p-3 border border-[#333] rounded-lg hover:border-neutral-400 transition-colors"
                       >
                         <div
                           className={cn(
-                            "h-16 rounded-md mb-2 border border-neutral-200",
+                            "h-16 rounded-md mb-2 border border-[#333]",
                             theme.bg
                           )}
                         />
@@ -307,7 +307,7 @@ export function SettingsDialog() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-3">
+                  <label className="block text-sm font-medium text-neutral-200 mb-3">
                     Text size
                   </label>
                   <div className="flex items-center gap-4">
@@ -344,10 +344,10 @@ export function SettingsDialog() {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-200 mb-1">
                       Language
                     </label>
-                    <select className="w-full px-3 py-2 border border-neutral-200 rounded-md">
+                    <select className="w-full px-3 py-2 border border-[#333] bg-[#0a0a0a] text-neutral-200 rounded-md">
                       <option>English (UK)</option>
                       <option>English (US)</option>
                       <option>French</option>
@@ -357,10 +357,10 @@ export function SettingsDialog() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-200 mb-1">
                       Date format
                     </label>
-                    <select className="w-full px-3 py-2 border border-neutral-200 rounded-md">
+                    <select className="w-full px-3 py-2 border border-[#333] bg-[#0a0a0a] text-neutral-200 rounded-md">
                       <option>DD/MM/YYYY</option>
                       <option>MM/DD/YYYY</option>
                       <option>YYYY-MM-DD</option>
@@ -368,10 +368,10 @@ export function SettingsDialog() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-1">
+                    <label className="block text-sm font-medium text-neutral-200 mb-1">
                       Start week on
                     </label>
-                    <select className="w-full px-3 py-2 border border-neutral-200 rounded-md">
+                    <select className="w-full px-3 py-2 border border-[#333] bg-[#0a0a0a] text-neutral-200 rounded-md">
                       <option>Monday</option>
                       <option>Sunday</option>
                       <option>Saturday</option>
@@ -386,7 +386,7 @@ export function SettingsDialog() {
                 <h2 className="text-lg font-semibold mb-4">Security</h2>
 
                 <div className="space-y-4">
-                  <div className="p-4 border border-neutral-200 rounded-lg">
+                  <div className="p-4 border border-[#333] rounded-lg">
                     <h3 className="text-sm font-medium mb-2">Password</h3>
                     <p className="text-sm text-neutral-500 mb-3">
                       Change your password to keep your account secure
@@ -396,7 +396,7 @@ export function SettingsDialog() {
                     </Button>
                   </div>
 
-                  <div className="p-4 border border-neutral-200 rounded-lg">
+                  <div className="p-4 border border-[#333] rounded-lg">
                     <h3 className="text-sm font-medium mb-2">
                       Two-factor authentication
                     </h3>
@@ -408,7 +408,7 @@ export function SettingsDialog() {
                     </Button>
                   </div>
 
-                  <div className="p-4 border border-neutral-200 rounded-lg">
+                  <div className="p-4 border border-[#333] rounded-lg">
                     <h3 className="text-sm font-medium mb-2">Active sessions</h3>
                     <p className="text-sm text-neutral-500 mb-3">
                       Manage and log out from your active sessions

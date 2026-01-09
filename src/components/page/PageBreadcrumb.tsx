@@ -40,8 +40,8 @@ export function PageBreadcrumb({ pageId }: PageBreadcrumbProps) {
               className={cn(
                 "flex items-center gap-1.5 px-1.5 py-0.5 rounded max-w-40 truncate",
                 isLast
-                  ? "text-neutral-700 font-medium"
-                  : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
+                  ? "text-neutral-200 font-medium"
+                  : "text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 transition-colors"
               )}
             >
               {page.icon ? (
