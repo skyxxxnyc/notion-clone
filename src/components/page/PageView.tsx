@@ -35,6 +35,7 @@ import {
   type GeneratedTable,
   type SmartSuggestion,
 } from "@/components/ai";
+import { PremiumPageView } from "./PremiumPageView";
 
 interface PageViewProps {
   pageId: string;
@@ -335,6 +336,11 @@ export function PageView({ pageId }: PageViewProps) {
         </div>
       </div>
     );
+  }
+
+  // Check if page uses premium layout
+  if (page.layout === "premium") {
+    return <PremiumPageView pageId={pageId} />;
   }
 
   return (

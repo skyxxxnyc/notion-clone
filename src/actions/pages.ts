@@ -39,23 +39,31 @@ export async function createPage(
 
     if (!user) throw new Error("Unauthorized");
 
-    const { data, error } = await supabase
-        .from("pages")
-        .insert({
-            ...(id ? { id } : {}),
-            workspace_id: workspaceId,
-            parent_id: parentId,
-            title,
-            created_by: user.id,
-            last_edited_by: user.id,
-        })
-        .select()
-        .single();
+    try {
+        const { data, error } = await supabase
+            .from("pages")
+            .insert({
+                ...(id ? { id } : {}),
+                workspace_id: workspaceId,
+                parent_id: parentId,
+                title,
+                created_by: user.id,
+                last_edited_by: user.id,
+            })
+            .select()
+            .single();
 
-    if (error) throw error;
+        if (error) {
+            console.error(`[createPage] Database error creating page "${title}":`, error);
+            throw new Error(`Database error: ${error.message} (details: ${JSON.stringify(error)})`);
+        }
 
-    revalidatePath("/");
-    return mapPage(data);
+        revalidatePath("/");
+        return mapPage(data);
+    } catch (e: any) {
+        console.error(`[createPage] Unexpected error creating page "${title}":`, e);
+        throw e;
+    }
 }
 
 export async function bulkCreatePages(
@@ -135,27 +143,29 @@ export async function updatePage(id: string, updates: any) {
         mappedUpdates[mappedKey] = updates[key];
     });
 
-    const { data, error } = await supabase
-        .from("pages")
-        .update({
-            ...mappedUpdates,
-            last_edited_by: user.id,
-            updated_at: new Date().toISOString(),
-        })
-        .eq("id", id)
-        .select()
-        .single(); // Ensure we usually get the data back to map it
+    try {
+        const { data, error } = await supabase
+            .from("pages")
+            .update({
+                ...mappedUpdates,
+                last_edited_by: user.id,
+                updated_at: new Date().toISOString(),
+            })
+            .eq("id", id)
+            .select()
+            .single();
 
-    if (error) throw error;
+        if (error) {
+            console.error(`[updatePage] Database error updating page ${id}:`, error);
+            throw new Error(`Database error: ${error.message} (details: ${JSON.stringify(error)})`);
+        }
 
-    revalidatePath("/");
-    // Note: update didn't originally return data in previous code? 
-    // "return data;" was there. Supabase update doesn't return data unless .select() is called.
-    // The previous code had `return data;` but NO `.select()`. So it returned NULL?
-    // If so, store update might have been relying on optimistic updates.
-    // But `importModal` awaits it. if it returned null, `await updatePage(...)` is void.
-    // However, I added `.select().single()` to be safe so I can map it.
-    return mapPage(data);
+        revalidatePath("/");
+        return mapPage(data);
+    } catch (e: any) {
+        console.error(`[updatePage] Unexpected error updating page ${id}:`, e);
+        throw e;
+    }
 }
 
 export async function deletePage(id: string) {
