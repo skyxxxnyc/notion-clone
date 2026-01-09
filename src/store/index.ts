@@ -78,7 +78,8 @@ interface AppState {
     rowId: string,
     updates: Partial<DatabaseRow>
   ) => void;
-  deleteDatabaseRow: (databaseId: string, rowId: string) => void;
+  deleteDatabaseRow: (databaseId: string, rowId: string) => Promise<void>;
+  bulkDeleteDatabaseRows: (databaseId: string, rowIds: string[]) => Promise<void>;
 
   // UI State
   sidebarOpen: boolean;
@@ -1067,9 +1068,19 @@ export const useAppStore = create<AppState>()(
 
       createDatabaseRow: async (databaseId) => {
         const state = get();
-        const userId = state.currentUser?.id || "anonymous";
-        const now = new Date().toISOString();
+        const userId = state.currentUser?.id;
+        if (!userId) throw new Error("Unauthorized");
+
+        const databasePage = state.pages[databaseId];
+        const workspaceId = databasePage?.workspaceId || state.currentWorkspaceId;
+
+        if (!workspaceId) {
+          console.error("Missing workspace ID for createDatabaseRow");
+          throw new Error("Missing workspace ID");
+        }
+
         const newId = generateId();
+        const now = new Date().toISOString();
 
         const newPage: Page = {
           id: newId,
@@ -1078,7 +1089,7 @@ export const useAppStore = create<AppState>()(
           coverImage: null,
           coverPosition: 0.5,
           parentId: databaseId,
-          workspaceId: state.currentWorkspaceId!,
+          workspaceId: workspaceId,
           createdBy: userId,
           lastEditedBy: userId,
           createdAt: now,
@@ -1120,7 +1131,7 @@ export const useAppStore = create<AppState>()(
 
         // Server Sync
         try {
-          await pageActions.createPage(state.currentWorkspaceId!, databaseId, "Untitled", newId);
+          await pageActions.createPage(workspaceId, databaseId, "Untitled", newId);
         } catch (error) {
           console.error("Failed to create database row:", error);
           // Rollback
@@ -1171,14 +1182,36 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      deleteDatabaseRow: (databaseId, rowId) =>
+      deleteDatabaseRow: async (databaseId, rowId) => {
         set((state) => {
           if (state.databaseRows[databaseId]) {
-            state.databaseRows[databaseId] = state.databaseRows[
-              databaseId
-            ].filter((r) => r.id !== rowId);
+            state.databaseRows[databaseId] = state.databaseRows[databaseId].filter((r) => r.id !== rowId);
           }
-        }),
+          if (state.pages[rowId]) {
+            delete state.pages[rowId];
+          }
+          if (state.pages[databaseId]) {
+            state.pages[databaseId].children = state.pages[databaseId].children.filter(id => id !== rowId);
+          }
+        });
+        await pageActions.deletePage(rowId);
+      },
+
+      bulkDeleteDatabaseRows: async (databaseId, rowIds) => {
+        const idsSet = new Set(rowIds);
+        set((state) => {
+          if (state.databaseRows[databaseId]) {
+            state.databaseRows[databaseId] = state.databaseRows[databaseId].filter(r => !idsSet.has(r.id));
+          }
+          if (state.pages[databaseId]) {
+            state.pages[databaseId].children = state.pages[databaseId].children.filter(id => !idsSet.has(id));
+          }
+          rowIds.forEach(id => {
+            delete state.pages[id];
+          });
+        });
+        await pageActions.bulkDeletePages(rowIds);
+      },
 
       // UI State
       sidebarOpen: true,

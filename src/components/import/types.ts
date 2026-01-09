@@ -21,6 +21,7 @@ export interface FieldMapping {
     targetName: string;
     targetType: PropertyType;
     enabled: boolean;
+    isTitle?: boolean; // Use this column value as the page title
 }
 
 export interface ImportConfig {

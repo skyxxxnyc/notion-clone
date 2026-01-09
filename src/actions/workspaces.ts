@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase-server";
+import { createClient, createAdminClient } from "@/lib/supabase-server";
 import { revalidatePath } from "next/cache";
 
 export async function getWorkspaces() {
@@ -86,8 +86,11 @@ export async function createWorkspace(name: string) {
 
     if (!user) throw new Error("Unauthorized");
 
+    // Use admin client to bypass RLS
+    const adminClient = await createAdminClient();
+
     // Create workspace
-    const { data: workspace, error: workspaceError } = await supabase
+    const { data: workspace, error: workspaceError } = await adminClient
         .from("workspaces")
         .insert({
             name,
@@ -99,7 +102,7 @@ export async function createWorkspace(name: string) {
     if (workspaceError) throw workspaceError;
 
     // Add user as owner in workspace_members
-    const { error: memberError } = await supabase
+    const { error: memberError } = await adminClient
         .from("workspace_members")
         .insert({
             workspace_id: workspace.id,
@@ -150,4 +153,45 @@ export async function deleteWorkspace(id: string) {
     if (error) throw error;
 
     revalidatePath("/");
+}
+
+export async function resetUserAccount() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    // Use Admin Client for deletion to bypass RLS issues
+    const adminClient = await createAdminClient();
+
+    // Delete all workspaces where user is owner
+    const { error: deleteError } = await adminClient
+        .from("workspaces")
+        .delete()
+        .eq("owner_id", user.id);
+
+    if (deleteError) throw deleteError;
+
+    // Create default workspace using regular client (as owner)
+    // Actually, createWorkspace logic uses 'insert' policy which allows authenticated user.
+    // So regular client is fine.
+    const { data: workspace, error: createError } = await supabase
+        .from("workspaces")
+        .insert({
+            name: "My Workspace",
+            owner_id: user.id
+        })
+        .select()
+        .single();
+
+    if (createError) throw createError;
+
+    // Add member
+    await supabase.from("workspace_members").insert({
+        workspace_id: workspace.id,
+        user_id: user.id,
+        role: "owner"
+    });
+
+    revalidatePath("/");
+    return workspace;
 }

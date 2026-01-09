@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/actions/auth";
+import { resetUserAccount } from "@/actions/workspaces";
 
 const SETTINGS_SECTIONS = [
   { id: "account", label: "Account", icon: User },
@@ -41,6 +42,21 @@ export function SettingsDialog() {
   const { settingsOpen, setSettingsOpen, currentUser, updateWorkspace, currentWorkspaceId, workspaces } = useAppStore();
   const [activeSection, setActiveSection] = useState("account");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleResetAccount = async () => {
+    if (!window.confirm("Are you sure? This will delete ALL your workspaces and pages. This action is irreversible.")) return;
+
+    setIsResetting(true);
+    try {
+      await resetUserAccount();
+      window.location.reload();
+    } catch (e) {
+      console.error(e);
+      setIsResetting(false);
+      alert("Failed to reset account");
+    }
+  };
 
   const currentWorkspace = workspaces.find((w) => w.id === currentWorkspaceId);
 
@@ -138,10 +154,21 @@ export function SettingsDialog() {
                   <h3 className="text-sm font-semibold text-red-600 mb-2">
                     Danger zone
                   </h3>
-                  <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete account
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50"
+                      onClick={handleResetAccount}
+                      disabled={isResetting}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {isResetting ? "Resetting..." : "Reset library (Clear all content)"}
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete account
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}

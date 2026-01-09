@@ -167,6 +167,15 @@ export async function deletePage(id: string) {
     revalidatePath("/");
 }
 
+export async function bulkDeletePages(ids: string[]) {
+    const supabase = await createClient();
+    const { error } = await supabase.from("pages").delete().in("id", ids);
+
+    if (error) throw error;
+
+    revalidatePath("/");
+}
+
 export async function getPages(workspaceId: string) {
     const supabase = await createClient();
     const { data, error } = await supabase

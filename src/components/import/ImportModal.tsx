@@ -54,27 +54,17 @@ export function ImportModal({ open, onOpenChange }: ImportModalProps) {
             if (!newPage) throw new Error("Failed to create database");
 
             // 2. Construct Properties
-            const titleMapping = mappings.find(m => m.enabled && m.targetType === 'title');
+            const titleMapping = mappings.find(m => m.enabled && m.isTitle);
             const properties: DatabaseProperty[] = [];
 
-            // Handle Title
-            if (titleMapping) {
-                properties.push({
-                    id: 'title',
-                    name: titleMapping.targetName,
-                    type: 'title',
-                    isVisible: true,
-                    width: 250
-                });
-            } else {
-                properties.push({
-                    id: 'title',
-                    name: 'Name',
-                    type: 'title',
-                    isVisible: true,
-                    width: 250
-                });
-            }
+            // Handle Title property
+            properties.push({
+                id: 'title',
+                name: titleMapping?.targetName || 'Name',
+                type: 'title',
+                isVisible: true,
+                width: 250
+            });
 
             // Add other properties with auto-generated options
             const optionColors = ["#e5e5e5", "#fef3c7", "#dcfce7", "#dbeafe", "#f3e8ff", "#fee2e2", "#ffedd5"];
@@ -148,7 +138,7 @@ export function ImportModal({ open, onOpenChange }: ImportModalProps) {
                         const value = row[m.sourceKey];
                         let targetPropId = '';
 
-                        if (m === titleMapping) {
+                        if (m.isTitle) {
                             targetPropId = 'title';
                             rowTitle = String(value || "Untitled");
                         } else {

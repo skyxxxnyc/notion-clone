@@ -13,7 +13,9 @@ import {
   EyeOff,
   Settings,
   Type,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,6 +46,12 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { generateCellContent } from "@/actions/ai";
 
 interface TableViewProps {
   page: Page;
@@ -84,7 +92,7 @@ const PROPERTY_TYPES: { type: PropertyType; label: string }[] = [
 ];
 
 export function TableView({ page, rows, onAddRow }: TableViewProps) {
-  const { updateDatabaseRow, deleteDatabaseRow, setCurrentPage, updatePage } = useAppStore();
+  const { updateDatabaseRow, deleteDatabaseRow, bulkDeleteDatabaseRows, setCurrentPage, updatePage } = useAppStore();
   const config = page.databaseConfig || {
     properties: DEFAULT_PROPERTIES,
     views: [],
@@ -97,6 +105,22 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
     propertyId: string;
   } | null>(null);
   const [highlightedPropertyId, setHighlightedPropertyId] = useState<string | null>(null);
+  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedRowIds(new Set(rows.map(r => r.id)));
+    } else {
+      setSelectedRowIds(new Set());
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (window.confirm(`Delete ${selectedRowIds.size} rows?`)) {
+      await bulkDeleteDatabaseRows(page.id, Array.from(selectedRowIds));
+      setSelectedRowIds(new Set());
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -178,6 +202,15 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
         {/* Header Row */}
         <div className="flex border-b border-neutral-200 bg-neutral-50 sticky top-0 z-10">
           <div className="w-8 flex-shrink-0 border-r border-neutral-200" /> {/* Row Drag handle column */}
+          <div className="w-8 flex-shrink-0 flex items-center justify-center border-r border-neutral-200 bg-neutral-50">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-neutral-300"
+              checked={rows.length > 0 && selectedRowIds.size === rows.length}
+              ref={input => { if (input) input.indeterminate = selectedRowIds.size > 0 && selectedRowIds.size < rows.length; }}
+              onChange={handleSelectAll}
+            />
+          </div>
 
           <SortableContext
             items={visibleProperties.map(p => p.id)}
@@ -223,6 +256,22 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
                   <GripVertical className="h-4 w-4 text-neutral-400" />
                 </div>
 
+                {/* Selection Checkbox */}
+                <div className="w-8 flex items-center justify-center border-r border-transparent group-hover:border-neutral-200 flex-shrink-0">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-neutral-300 opacity-0 group-hover:opacity-100 data-[checked=true]:opacity-100 transition-opacity"
+                    checked={selectedRowIds.has(row.id)}
+                    data-checked={selectedRowIds.has(row.id)}
+                    onChange={(e) => {
+                      const next = new Set(selectedRowIds);
+                      if (e.target.checked) next.add(row.id);
+                      else next.delete(row.id);
+                      setSelectedRowIds(next);
+                    }}
+                  />
+                </div>
+
                 {/* Cells */}
                 {visibleProperties.map((property) => (
                   <div
@@ -248,6 +297,8 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
                         handleCellChange(row.id, property.id, value)
                       }
                       onOpenPage={() => setCurrentPage(row.id)}
+                      rowTitle={row.properties['title'] as string || row.title}
+                      rowProperties={row.properties}
                     />
                   </div>
                 ))}
@@ -292,6 +343,19 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
           New
         </Button>
       </div>
+
+      {/* Bulk Actions Toolbar */}
+      {selectedRowIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white shadow-xl border border-neutral-200 rounded-lg px-4 py-2 flex items-center gap-4 z-50 animate-in fade-in slide-in-from-bottom-4">
+          <span className="text-sm font-medium text-neutral-700">{selectedRowIds.size} selected</span>
+          <div className="h-4 w-px bg-neutral-200" />
+          <Button size="sm" variant="destructive" onClick={handleBulkDelete} className="gap-2">
+            <Trash className="h-4 w-4" />
+            Delete
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedRowIds(new Set())}>Cancel</Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -398,18 +462,14 @@ function SortableHeader({ property, onUpdate, onDelete, isHighlighted, onToggleH
             </DropdownMenuSubContent>
           </DropdownMenuSub>
           <DropdownMenuSeparator />
-          {property.id !== 'title' && property.type !== 'title' && (
-            <>
-              <DropdownMenuItem onClick={() => onUpdate(property.id, { isVisible: false })}>
-                <EyeOff className="h-3 w-3 mr-2" />
-                Hide in view
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDelete(property.id)} className="text-red-600">
-                <Trash className="h-3 w-3 mr-2" />
-                Delete property
-              </DropdownMenuItem>
-            </>
-          )}
+          <DropdownMenuItem onClick={() => onUpdate(property.id, { isVisible: false })}>
+            <EyeOff className="h-3 w-3 mr-2" />
+            Hide in view
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onDelete(property.id)} className="text-red-600">
+            <Trash className="h-3 w-3 mr-2" />
+            Delete property
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -431,6 +491,8 @@ interface TableCellProps {
   onEndEdit: () => void;
   onChange: (value: unknown) => void;
   onOpenPage?: () => void;
+  rowTitle?: string;
+  rowProperties?: Record<string, any>;
 }
 
 function TableCell({
@@ -441,7 +503,81 @@ function TableCell({
   onEndEdit,
   onChange,
   onOpenPage,
+  rowTitle,
+  rowProperties,
 }: TableCellProps) {
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiPopoverOpen, setAiPopoverOpen] = useState(false);
+
+  const handleAiGenerate = async () => {
+    if (!aiPrompt.trim()) return;
+    setIsGenerating(true);
+    try {
+      const result = await generateCellContent(
+        aiPrompt,
+        property.type,
+        property.name,
+        { title: rowTitle, otherValues: rowProperties }
+      );
+      onChange(result);
+      setAiPrompt("");
+      setAiPopoverOpen(false);
+    } catch (error) {
+      console.error("AI generation failed:", error);
+      alert("AI generation failed. Check console for details.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // AI Trigger Button Component
+  const AiButton = () => (
+    <Popover open={aiPopoverOpen} onOpenChange={setAiPopoverOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 bg-gradient-to-r from-violet-500 to-purple-600 text-white p-1 rounded shadow-sm hover:shadow-md transition-all z-20"
+          onClick={(e) => e.stopPropagation()}
+          title="Generate with AI"
+        >
+          <Sparkles className="h-3 w-3" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-3" align="end">
+        <div className="space-y-2">
+          <div className="text-sm font-medium text-neutral-700">AI Generate</div>
+          <p className="text-xs text-neutral-500">
+            Describe what to generate for "{property.name}"
+          </p>
+          <textarea
+            value={aiPrompt}
+            onChange={(e) => setAiPrompt(e.target.value)}
+            placeholder={`e.g., "Generate a summary" or "Look up the price"`}
+            className="w-full text-sm border border-neutral-200 rounded-md px-2 py-1.5 resize-none h-16 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            disabled={isGenerating}
+          />
+          <button
+            onClick={handleAiGenerate}
+            disabled={isGenerating || !aiPrompt.trim()}
+            className="w-full bg-gradient-to-r from-violet-500 to-purple-600 text-white text-sm py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-3 w-3" />
+                Generate
+              </>
+            )}
+          </button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+
   switch (property.type) {
     case "title":
     case "text":
@@ -459,15 +595,16 @@ function TableCell({
         />
       ) : (
         <div
-          className="w-full text-sm truncate cursor-text min-h-[24px] relative group pr-12 flex items-center"
+          className="w-full text-sm truncate cursor-text min-h-[24px] relative group/cell pr-16 flex items-center"
           onClick={onStartEdit}
         >
           {(value as string) || (
             <span className="text-neutral-400 opacity-50">Empty</span>
           )}
+          <AiButton />
           {property.type === 'title' && onOpenPage && (
             <button
-              className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 bg-white border border-neutral-200 shadow-sm px-1.5 py-0.5 text-xs font-medium text-neutral-600 rounded hover:bg-neutral-50 flex items-center gap-1 z-10 transition-opacity"
+              className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover/cell:opacity-100 bg-white border border-neutral-200 shadow-sm px-1.5 py-0.5 text-xs font-medium text-neutral-600 rounded hover:bg-neutral-50 flex items-center gap-1 z-10 transition-opacity"
               onClick={(e) => {
                 e.stopPropagation();
                 onOpenPage();
@@ -492,12 +629,13 @@ function TableCell({
         />
       ) : (
         <div
-          className="w-full text-sm truncate cursor-text min-h-[24px] flex items-center"
+          className="w-full text-sm truncate cursor-text min-h-[24px] flex items-center relative group/cell pr-8"
           onClick={onStartEdit}
         >
           {value !== undefined && value !== null ? String(value) : (
             <span className="text-neutral-400 opacity-50">Empty</span>
           )}
+          <AiButton />
         </div>
       );
 
