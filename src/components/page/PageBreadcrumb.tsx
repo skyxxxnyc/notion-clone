@@ -10,7 +10,9 @@ interface PageBreadcrumbProps {
 }
 
 export function PageBreadcrumb({ pageId }: PageBreadcrumbProps) {
-  const { pages, setCurrentPage } = useAppStore();
+  const { pages, setCurrentPage, workspaces, currentWorkspaceId } = useAppStore();
+
+  const currentWorkspace = workspaces.find((w) => w.id === currentWorkspaceId);
 
   // Build breadcrumb path
   const buildPath = (id: string): string[] => {
@@ -24,6 +26,18 @@ export function PageBreadcrumb({ pageId }: PageBreadcrumbProps) {
 
   return (
     <nav className="flex items-center gap-1 text-sm">
+      {/* Workspace Home - Always first */}
+      <button
+        onClick={() => setCurrentPage(null)}
+        className="flex items-center gap-1.5 px-1.5 py-0.5 rounded max-w-40 truncate text-neutral-300 hover:bg-neutral-800 hover:text-neutral-100 transition-colors"
+      >
+        <div className="w-4 h-4 rounded-none bg-[#ccff00] border border-black flex items-center justify-center text-black text-[10px] font-bold font-mono flex-shrink-0">
+          {currentWorkspace?.icon || currentWorkspace?.name?.charAt(0).toUpperCase() || "W"}
+        </div>
+        <span className="truncate">{currentWorkspace?.name || "Workspace"}</span>
+      </button>
+
+      {/* Page Path */}
       {path.map((id, index) => {
         const page = pages[id];
         if (!page) return null;
@@ -32,16 +46,14 @@ export function PageBreadcrumb({ pageId }: PageBreadcrumbProps) {
 
         return (
           <React.Fragment key={id}>
-            {index > 0 && (
-              <ChevronRight className="h-3 w-3 text-neutral-400 flex-shrink-0" />
-            )}
+            <ChevronRight className="h-3 w-3 text-neutral-500 flex-shrink-0" />
             <button
               onClick={() => !isLast && setCurrentPage(id)}
               className={cn(
                 "flex items-center gap-1.5 px-1.5 py-0.5 rounded max-w-40 truncate",
                 isLast
-                  ? "text-neutral-200 font-medium"
-                  : "text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 transition-colors"
+                  ? "text-neutral-100 font-medium"
+                  : "text-neutral-300 hover:bg-neutral-800 hover:text-neutral-100 transition-colors"
               )}
             >
               {page.icon ? (

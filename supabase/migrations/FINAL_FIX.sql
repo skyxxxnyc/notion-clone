@@ -89,7 +89,7 @@ CREATE TABLE pages (
 
 CREATE TABLE blocks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    page_id UUID REFERENCES pages(id) ON DELETE CASCADE,
+    page_id UUID NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
     parent_id UUID,
     type TEXT NOT NULL,
     content TEXT,

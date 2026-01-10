@@ -389,7 +389,7 @@ export function PageView({ pageId }: PageViewProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="text-neutral-400 hover:text-neutral-200"
+            className="text-neutral-300 hover:text-neutral-100"
           >
             Share
           </Button>

@@ -37,6 +37,7 @@ export function WorkspaceSwitcher() {
     createWorkspace,
     updateWorkspace,
     deleteWorkspace,
+    setCurrentPage,
   } = useAppStore();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -66,13 +67,27 @@ export function WorkspaceSwitcher() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-neutral-800 transition-colors">
-            <div className="w-6 h-6 rounded-none bg-[#ccff00] border border-black flex items-center justify-center text-black text-xs font-bold font-mono">
+          <button className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-neutral-800 transition-colors group">
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentPage(null);
+              }}
+              className="w-6 h-6 rounded-none bg-[#ccff00] border border-black flex items-center justify-center text-black text-xs font-bold font-mono hover:scale-110 transition-transform cursor-pointer"
+              title="Go to dashboard"
+            >
               {currentWorkspace?.icon ||
                 currentWorkspace?.name?.charAt(0).toUpperCase() ||
                 "W"}
             </div>
-            <span className="text-sm font-medium text-neutral-200 max-w-32 truncate">
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentPage(null);
+              }}
+              className="text-sm font-medium text-neutral-200 max-w-32 truncate hover:text-[#ccff00] transition-colors cursor-pointer"
+              title="Go to dashboard"
+            >
               {currentWorkspace?.name || "Workspace"}
             </span>
             <ChevronDown className="h-4 w-4 text-neutral-400" />

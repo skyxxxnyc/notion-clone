@@ -13,10 +13,12 @@ import {
     Rocket,
     Target,
     Lightbulb,
+    Brain,
 } from "lucide-react";
 import { GeneratePageModal, GenerateTableModal } from "@/components/ai";
 import type { GeneratedPage, GeneratedTable } from "@/components/ai";
 import { SolopreneurOSSetup } from "@/components/solopreneur/SolopreneurOSSetup";
+import { KnowtbookLM } from "@/components/knowtbook/KnowtbookLM";
 import "./premium-dashboard.css";
 
 const QUICK_ACTIONS = [
@@ -45,6 +47,7 @@ export default function PremiumDashboard() {
     const [showPageModal, setShowPageModal] = useState(false);
     const [showTableModal, setShowTableModal] = useState(false);
     const [showSolopreneurOS, setShowSolopreneurOS] = useState(false);
+    const [showKnowtbook, setShowKnowtbook] = useState(false);
     const [aiPrompt, setAiPrompt] = useState("");
 
     // Get recent pages (last 5 edited)
@@ -303,6 +306,15 @@ export default function PremiumDashboard() {
                         <small style={{ fontSize: '11px', opacity: 0.7 }}>Complete Business System</small>
                     </button>
 
+                    <button
+                        className="template-card"
+                        onClick={() => setShowKnowtbook(true)}
+                    >
+                        <Brain size={24} />
+                        <span>KnowtbookLM</span>
+                        <small style={{ fontSize: '11px', opacity: 0.7 }}>AI Knowledge Base</small>
+                    </button>
+
                     {TEMPLATES.map((template) => {
                         const Icon = template.icon;
                         return (
@@ -343,6 +355,10 @@ export default function PremiumDashboard() {
                 isOpen={showSolopreneurOS}
                 onClose={() => setShowSolopreneurOS(false)}
             />
+
+            {showKnowtbook && (
+                <KnowtbookLM onClose={() => setShowKnowtbook(false)} />
+            )}
         </div >
     );
 }

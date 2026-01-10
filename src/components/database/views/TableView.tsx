@@ -84,6 +84,7 @@ const PROPERTY_TYPES: { type: PropertyType; label: string }[] = [
   { type: "number", label: "Number" },
   { type: "select", label: "Select" },
   { type: "multiSelect", label: "Multi-select" },
+  { type: "tags", label: "Tags" },
   { type: "date", label: "Date" },
   { type: "checkbox", label: "Checkbox" },
   { type: "url", label: "URL" },
@@ -600,16 +601,16 @@ function SortableHeader({ property, onUpdate, onDelete, isHighlighted, onToggleH
 
             <div className="p-4 space-y-4">
               <div>
-                <div className="text-sm font-medium text-neutral-700 mb-1">
+                <div className="text-sm font-medium text-neutral-900 mb-1">
                   Column: <span className="text-violet-600">{property.name}</span>
                 </div>
-                <div className="text-xs text-neutral-500">
+                <div className="text-xs text-neutral-600">
                   Type: {property.type}
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-neutral-700 block mb-2">
+                <label className="text-sm font-medium text-neutral-900 block mb-2">
                   How should AI fill this column?
                 </label>
                 <textarea
@@ -799,7 +800,7 @@ function TableCell({
           onChange={(e) => onChange(e.target.value)}
           onBlur={onEndEdit}
           onKeyDown={(e) => e.key === "Enter" && onEndEdit()}
-          className="w-full px-1 py-0.5 text-sm border border-blue-500 rounded outline-none bg-white"
+          className="w-full px-1 py-0.5 text-sm border border-blue-500 rounded outline-none bg-white text-neutral-900"
           autoFocus
         />
       ) : (
@@ -833,7 +834,7 @@ function TableCell({
           onChange={(e) => onChange(parseFloat(e.target.value))}
           onBlur={onEndEdit}
           onKeyDown={(e) => e.key === "Enter" && onEndEdit()}
-          className="w-full px-1 py-0.5 text-sm border border-blue-500 rounded outline-none"
+          className="w-full px-1 py-0.5 text-sm border border-blue-500 rounded outline-none bg-white text-neutral-900"
           autoFocus
         />
       ) : (
@@ -856,7 +857,7 @@ function TableCell({
             <button className="w-full text-left min-h-[24px] flex items-center">
               {selectedOption || (value && typeof value === 'string') ? ( // Fallback if value exists but not in options
                 <span
-                  className="inline-block px-2 py-0.5 rounded text-xs"
+                  className="inline-block px-2 py-0.5 rounded text-xs text-neutral-900 font-medium"
                   style={{ backgroundColor: selectedOption?.color || '#e5e5e5' }}
                 >
                   {selectedOption?.name || String(value)}
@@ -873,7 +874,7 @@ function TableCell({
                 onClick={() => onChange(option.name)} // Saving Name usually easier for simple implementation, or ID
               >
                 <span
-                  className="inline-block px-2 py-0.5 rounded text-xs"
+                  className="inline-block px-2 py-0.5 rounded text-xs text-neutral-900 font-medium"
                   style={{ backgroundColor: option.color }}
                 >
                   {option.name}
@@ -897,13 +898,80 @@ function TableCell({
           {selectedOptionsList.length > 0 ? selectedOptionsList.map((option: any) => (
             <span
               key={option.id}
-              className="inline-block px-2 py-0.5 rounded text-xs"
+              className="inline-block px-2 py-0.5 rounded text-xs text-neutral-900 font-medium"
               style={{ backgroundColor: option.color }}
             >
               {option.name}
             </span>
           )) : (
             <span className="text-neutral-400 text-sm opacity-50">Select...</span>
+          )}
+        </div>
+      );
+
+    case "tags":
+      const tagValues = Array.isArray(value) ? value : (value ? [value] : []);
+      const tagsList = tagValues.map((val: string) => ({
+        id: val,
+        name: val,
+        color: `hsl(${Math.abs(val.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % 360}, 70%, 80%)`
+      }));
+
+      return isEditing ? (
+        <div className="flex flex-wrap gap-1 min-h-[24px] items-center border border-blue-500 rounded p-1 bg-white">
+          {tagsList.map((tag: any) => (
+            <span
+              key={tag.id}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs text-neutral-900 font-medium"
+              style={{ backgroundColor: tag.color }}
+            >
+              {tag.name}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newTags = tagValues.filter((t: string) => t !== tag.id);
+                  onChange(newTags);
+                }}
+                className="hover:text-red-600"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          <input
+            type="text"
+            placeholder="Add tag..."
+            className="flex-1 min-w-[80px] text-xs outline-none text-neutral-900"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                const newTag = e.currentTarget.value.trim();
+                if (!tagValues.includes(newTag)) {
+                  onChange([...tagValues, newTag]);
+                }
+                e.currentTarget.value = '';
+              } else if (e.key === 'Escape') {
+                onEndEdit();
+              }
+            }}
+            onBlur={onEndEdit}
+            autoFocus
+          />
+        </div>
+      ) : (
+        <div
+          className="flex flex-wrap gap-1 min-h-[24px] items-center cursor-text"
+          onClick={onStartEdit}
+        >
+          {tagsList.length > 0 ? tagsList.map((tag: any) => (
+            <span
+              key={tag.id}
+              className="inline-block px-2 py-0.5 rounded text-xs text-neutral-900 font-medium"
+              style={{ backgroundColor: tag.color }}
+            >
+              {tag.name}
+            </span>
+          )) : (
+            <span className="text-neutral-400 text-sm opacity-50">Add tags...</span>
           )}
         </div>
       );
@@ -915,7 +983,7 @@ function TableCell({
           value={(value as string) || ""}
           onChange={(e) => onChange(e.target.value)}
           onBlur={onEndEdit}
-          className="w-full px-1 py-0.5 text-sm border border-blue-500 rounded outline-none"
+          className="w-full px-1 py-0.5 text-sm border border-blue-500 rounded outline-none bg-white text-neutral-900"
           autoFocus
         />
       ) : (
@@ -949,7 +1017,7 @@ function TableCell({
           onChange={(e) => onChange(e.target.value)}
           onBlur={onEndEdit}
           onKeyDown={(e) => e.key === "Enter" && onEndEdit()}
-          className="w-full px-1 py-0.5 text-sm border border-blue-500 rounded outline-none"
+          className="w-full px-1 py-0.5 text-sm border border-blue-500 rounded outline-none bg-white text-neutral-900"
           autoFocus
         />
       ) : (

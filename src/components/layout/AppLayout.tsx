@@ -12,6 +12,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { cn } from "@/lib/utils";
 import PremiumDashboard from "@/components/dashboard/PremiumDashboard";
+import { NewsLayout } from "@/components/news/NewsLayout";
 
 export function AppLayout() {
   const {
@@ -23,6 +24,9 @@ export function AppLayout() {
     workspaces,
     createWorkspace,
     setSettingsOpen,
+    createPage,
+    setCurrentPage,
+    viewMode,
   } = useAppStore();
 
   // Global Keyboard Shortcuts
@@ -39,11 +43,24 @@ export function AppLayout() {
         e.preventDefault();
         setSettingsOpen(true);
       }
+
+      // New Page: Cmd/Ctrl + N
+      if ((e.metaKey || e.ctrlKey) && e.key === "n") {
+        e.preventDefault();
+        if (currentWorkspaceId && currentUser) {
+          // Use setTimeout to avoid conflict with browser shortcuts if any, though preventDefault should work
+          createPage(null, "Untitled").then((newPage) => {
+            if (newPage) {
+              setCurrentPage(newPage.id);
+            }
+          });
+        }
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [toggleSidebar, setSettingsOpen]);
+  }, [toggleSidebar, setSettingsOpen, createPage, setCurrentPage, currentWorkspaceId, currentUser]);
 
   // Create default workspace if none exists (must be before any conditional returns)
   useEffect(() => {
@@ -70,7 +87,9 @@ export function AppLayout() {
             sidebarOpen && `ml-0`
           )}
         >
-          {currentPageId ? (
+          {viewMode === "news" ? (
+            <NewsLayout />
+          ) : currentPageId ? (
             <PageView pageId={currentPageId} />
           ) : (
             <PremiumDashboard />

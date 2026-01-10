@@ -35,6 +35,7 @@ export type PropertyType =
   | "number"
   | "select"
   | "multiSelect"
+  | "tags"
   | "date"
   | "person"
   | "files"
@@ -327,4 +328,30 @@ export interface UserPresence {
   cursor?: { x: number; y: number };
   selection?: { blockId: string; start: number; end: number };
   lastSeen: number;
+}
+
+export interface NewsFeed {
+  id: string;
+  userId: string;
+  name: string;
+  type: "rss" | "reddit" | "topic";
+  url: string;
+  icon?: string;
+  createdAt: string;
+}
+
+export interface NewsItem {
+  id: string;
+  title: string;
+  link: string;
+  pubDate: string;
+  content?: string;
+  contentSnippet?: string;
+  author?: string;
+  thumbnail?: string;
+  feedId: string;
+  feedName: string;
+  feedIcon?: string;
+  read?: boolean;
+  saved?: boolean;
 }

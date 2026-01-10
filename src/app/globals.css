@@ -55,7 +55,6 @@ body {
   background: var(--neo-bg-main);
   color: var(--foreground);
   font-family: var(--font-inter), system-ui, sans-serif;
-  overflow-x: hidden;
   letter-spacing: -0.01em;
 }
 
@@ -140,34 +139,38 @@ body {
 }
 
 
-/* Scrollbar styling */
+/* Scrollbar styling - Neobrutalist */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #0a0a0a;
+  border-left: 1px solid #282828;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d4d4d4;
-  border-radius: 4px;
+  background: #282828;
+  border: 1px solid #333333;
+  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a3a3a3;
+  background: var(--neo-accent-primary);
+  border-color: #000;
 }
 
-/* Selection styling */
+/* Selection styling - Neobrutalist */
 ::selection {
-  background: rgba(59, 130, 246, 0.3);
+  background: var(--neo-accent-primary);
+  color: #000000;
 }
 
-/* Focus ring */
+/* Focus ring - Neobrutalist */
 *:focus-visible {
-  outline: 2px solid rgba(59, 130, 246, 0.5);
-  outline-offset: 2px;
+  outline: 2px solid var(--neo-accent-primary);
+  outline-offset: 0px;
 }
 
 /* Prose improvements for editor */

@@ -285,7 +285,7 @@ export function LayoutEditor({ initialLayout, onSave, onCancel, databaseProperti
             {showPresetPicker && (
                 <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center" onClick={() => setShowPresetPicker(false)}>
                     <div className="bg-white rounded-lg shadow-xl p-6 max-w-2xl w-full mx-4" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-lg font-semibold mb-4">Layout Presets</h3>
+                        <h3 className="text-lg font-semibold mb-4 text-neutral-900">Layout Presets</h3>
                         <div className="grid grid-cols-2 gap-3">
                             {Object.entries(LAYOUT_PRESETS).map(([key, { name, icon, layout: presetLayout }]) => (
                                 <button
@@ -296,8 +296,8 @@ export function LayoutEditor({ initialLayout, onSave, onCancel, databaseProperti
                                     <div className="flex items-start gap-3">
                                         <span className="text-2xl">{icon}</span>
                                         <div className="flex-1 min-w-0">
-                                            <div className="font-semibold text-sm">{name}</div>
-                                            <div className="text-xs text-neutral-500 mt-1">
+                                            <div className="font-semibold text-sm text-neutral-900">{name}</div>
+                                            <div className="text-xs text-neutral-600 mt-1">
                                                 {presetLayout.structure === 'tabbed' ? 'Tabbed layout' : 'Simple layout'} •
                                                 {' '}{presetLayout.mainArea.length} modules in main area
                                             </div>
@@ -314,7 +314,7 @@ export function LayoutEditor({ initialLayout, onSave, onCancel, databaseProperti
             {editingModule && editingModule.module.type === 'property_group' && (
                 <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center" onClick={() => setEditingModule(null)}>
                     <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-lg font-semibold mb-4">Configure Property Group</h3>
+                        <h3 className="text-lg font-semibold mb-4 text-neutral-900">Configure Property Group</h3>
 
                         {/* Module Label */}
                         <div className="mb-4">
@@ -358,8 +358,8 @@ export function LayoutEditor({ initialLayout, onSave, onCancel, databaseProperti
                                                 }}
                                                 className="rounded"
                                             />
-                                            <span className="text-sm">{prop.name}</span>
-                                            <span className="text-xs text-neutral-400">({prop.type})</span>
+                                            <span className="text-sm text-neutral-900">{prop.name}</span>
+                                            <span className="text-xs text-neutral-500">({prop.type})</span>
                                         </label>
                                     );
                                 })}
@@ -392,8 +392,8 @@ export function LayoutEditor({ initialLayout, onSave, onCancel, databaseProperti
             {editingModule && editingModule.module.type === 'heading' && (
                 <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center" onClick={() => setEditingModule(null)}>
                     <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-lg font-semibold mb-2">Pin Properties to Heading (Max 4)</h3>
-                        <p className="text-xs text-neutral-500 mb-4">
+                        <h3 className="text-lg font-semibold mb-2 text-neutral-900">Pin Properties to Heading (Max 4)</h3>
+                        <p className="text-xs text-neutral-600 mb-4">
                             Pinned properties appear under the title and as the first visible columns in table view
                         </p>
                         <div className="space-y-1 max-h-60 overflow-y-auto">
@@ -416,8 +416,8 @@ export function LayoutEditor({ initialLayout, onSave, onCancel, databaseProperti
                                         {isPinned && (
                                             <span className="text-xs font-mono text-neutral-500 w-4">#{pinnedIndex + 1}</span>
                                         )}
-                                        <span className="text-sm flex-1">{prop.name}</span>
-                                        <span className="text-xs text-neutral-400">({prop.type})</span>
+                                        <span className="text-sm flex-1 text-neutral-900">{prop.name}</span>
+                                        <span className="text-xs text-neutral-500">({prop.type})</span>
                                     </label>
                                 );
                             })}
@@ -438,27 +438,27 @@ export function LayoutEditor({ initialLayout, onSave, onCancel, databaseProperti
             {showModulePicker && (
                 <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center" onClick={() => setShowModulePicker(false)}>
                     <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-lg font-semibold mb-4">Add Module</h3>
+                        <h3 className="text-lg font-semibold mb-4 text-neutral-900">Add Module</h3>
                         <div className="space-y-2">
                             {MODULE_TYPES.map(({ type, label, icon: Icon, description }) => (
                                 <div key={type} className="border border-neutral-200 rounded-lg p-3 hover:bg-neutral-50">
                                     <div className="flex items-start gap-3">
                                         <Icon className="w-5 h-5 text-neutral-600 mt-0.5" />
                                         <div className="flex-1">
-                                            <div className="font-medium text-sm">{label}</div>
-                                            <div className="text-xs text-neutral-500 mt-0.5">{description}</div>
+                                            <div className="font-medium text-sm text-neutral-900">{label}</div>
+                                            <div className="text-xs text-neutral-600 mt-0.5">{description}</div>
                                         </div>
                                     </div>
                                     <div className="flex gap-2 mt-3">
                                         <button
                                             onClick={() => addModule(type, 'mainArea')}
-                                            className="flex-1 text-xs py-1.5 px-3 bg-neutral-100 hover:bg-neutral-200 rounded"
+                                            className="flex-1 text-xs py-1.5 px-3 bg-neutral-100 hover:bg-neutral-200 rounded text-neutral-900 font-medium"
                                         >
                                             + Main Area
                                         </button>
                                         <button
                                             onClick={() => addModule(type, 'sidePanel')}
-                                            className="flex-1 text-xs py-1.5 px-3 bg-neutral-100 hover:bg-neutral-200 rounded"
+                                            className="flex-1 text-xs py-1.5 px-3 bg-neutral-100 hover:bg-neutral-200 rounded text-neutral-900 font-medium"
                                         >
                                             + Side Panel
                                         </button>
@@ -481,7 +481,7 @@ export function LayoutEditor({ initialLayout, onSave, onCancel, databaseProperti
                     {/* Main Area */}
                     <div className="flex-1 space-y-2">
                         <div className="flex items-center justify-between mb-2">
-                            <div className="font-semibold text-sm text-neutral-500 uppercase tracking-wide">
+                            <div className="font-semibold text-sm text-neutral-700 uppercase tracking-wide">
                                 Main Area
                             </div>
                             <button
@@ -510,7 +510,7 @@ export function LayoutEditor({ initialLayout, onSave, onCancel, databaseProperti
                                 ))}
                             </SortableContext>
                             {layout.mainArea.length === 0 && (
-                                <div className="text-sm text-neutral-400 text-center py-8">
+                                <div className="text-sm text-neutral-600 text-center py-8">
                                     Drop modules here or click "Add Module"
                                 </div>
                             )}
@@ -520,7 +520,7 @@ export function LayoutEditor({ initialLayout, onSave, onCancel, databaseProperti
                     {/* Side Panel */}
                     <div className="w-full md:w-80 space-y-2">
                         <div className="flex items-center justify-between mb-2">
-                            <div className="font-semibold text-sm text-neutral-500 uppercase tracking-wide">
+                            <div className="font-semibold text-sm text-neutral-700 uppercase tracking-wide">
                                 Side Panel
                             </div>
                         </div>
@@ -542,7 +542,7 @@ export function LayoutEditor({ initialLayout, onSave, onCancel, databaseProperti
                                 ))}
                             </SortableContext>
                             {layout.sidePanel.length === 0 && (
-                                <div className="text-sm text-neutral-400 text-center py-8">
+                                <div className="text-sm text-neutral-600 text-center py-8">
                                     Drag modules here
                                 </div>
                             )}

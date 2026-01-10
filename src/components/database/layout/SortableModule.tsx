@@ -50,11 +50,11 @@ export function SortableModule({ module, overlay, onRemove, onConfigure }: Sorta
             </div>
 
             <div className="flex-1">
-                <span className="font-medium text-sm capitalize text-neutral-800">
+                <span className="font-medium text-sm capitalize text-neutral-900">
                     {module.label || (module.type === 'property_group' ? 'Property Group' : module.type.replace('_', ' '))}
                 </span>
                 {module.type && (
-                    <div className="text-xs text-neutral-500 mt-0.5">
+                    <div className="text-xs text-neutral-600 mt-0.5">
                         {module.type}
                     </div>
                 )}

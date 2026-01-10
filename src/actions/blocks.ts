@@ -97,9 +97,9 @@ export async function syncBlocks(pageId: string, blocks: any[]) {
     const blocksToInsert = blocks.map((block, index) => ({
         page_id: pageId,
         type: block.type || "text",
-        content: block.content || "",
-        properties: block.properties || {},
-        parent_id: block.parentId || null,
+        content: block.content ?? "",
+        properties: block.properties ?? {},
+        parent_id: block.parentId ?? null,
         index,
         created_by: user.id,
     }));
@@ -109,6 +109,10 @@ export async function syncBlocks(pageId: string, blocks: any[]) {
         .insert(blocksToInsert)
         .select();
 
-    if (insertError) throw insertError;
+    if (insertError) {
+        console.error("Block insert error:", insertError);
+        console.error("Attempted to insert blocks:", JSON.stringify(blocksToInsert, null, 2));
+        throw insertError;
+    }
     return data;
 }

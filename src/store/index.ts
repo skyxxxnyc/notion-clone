@@ -1,6 +1,10 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import { enableMapSet } from "immer";
+
+// Enable Immer support for Map and Set
+enableMapSet();
 import type {
   Page,
   Block,
@@ -10,6 +14,7 @@ import type {
   BlockType,
   BlockProperties,
 } from "@/types";
+import type { KnowledgeBase, ChatMessage, KnowledgeSource } from "@/types/knowtbook";
 import { generateId } from "@/lib/utils";
 import * as pageActions from "@/actions/pages";
 import * as blockActions from "@/actions/blocks";
@@ -99,6 +104,22 @@ interface AppState {
   pushHistory: (entry: HistoryEntry) => void;
   undo: () => void;
   redo: () => void;
+
+  // KnowtbookLM - Knowledge Base
+  knowledgeBases: Record<string, KnowledgeBase>;
+  currentKnowledgeBaseId: string | null;
+  setCurrentKnowledgeBase: (id: string | null) => void;
+  createKnowledgeBase: (name: string, description?: string) => KnowledgeBase;
+  updateKnowledgeBase: (id: string, updates: Partial<KnowledgeBase>) => void;
+  deleteKnowledgeBase: (id: string) => void;
+  addSourceToKnowledgeBase: (knowledgeBaseId: string, source: Omit<KnowledgeSource, "id" | "knowledgeBaseId" | "uploadedAt">) => KnowledgeSource;
+  removeSourceFromKnowledgeBase: (knowledgeBaseId: string, sourceId: string) => void;
+  addChatMessage: (knowledgeBaseId: string, message: Omit<ChatMessage, "id" | "timestamp">) => void;
+  clearChatHistory: (knowledgeBaseId: string) => void;
+
+  // View Mode
+  viewMode: "page" | "dashboard" | "news";
+  setViewMode: (mode: "page" | "dashboard" | "news") => void;
 }
 
 interface HistoryEntry {
@@ -408,6 +429,7 @@ export const useAppStore = create<AppState>()(
       setCurrentPage: (id) =>
         set((state) => {
           state.currentPageId = id;
+          state.viewMode = "page";
         }),
 
       togglePageExpanded: (id) =>
@@ -1258,6 +1280,10 @@ export const useAppStore = create<AppState>()(
       history: [],
       historyIndex: -1,
 
+      // View Mode
+      viewMode: "dashboard",
+      setViewMode: (mode) => set({ viewMode: mode }),
+
       pushHistory: (entry) =>
         set((state) => {
           // Remove any redo history
@@ -1285,6 +1311,149 @@ export const useAppStore = create<AppState>()(
           state.historyIndex++;
           // Implementation would apply data
         }),
+
+      // KnowtbookLM State
+      knowledgeBases: {},
+      currentKnowledgeBaseId: null,
+
+      setCurrentKnowledgeBase: (id) =>
+        set((state) => {
+          state.currentKnowledgeBaseId = id;
+        }),
+
+      createKnowledgeBase: (name, description) => {
+        const state = get();
+        const userId = state.currentUser?.id || "anonymous";
+        const workspaceId = state.currentWorkspaceId || "";
+        const now = new Date().toISOString();
+
+        const kb: KnowledgeBase = {
+          id: generateId(),
+          workspaceId,
+          name,
+          description,
+          icon: "📚",
+          color: "#ccff00",
+          sources: [],
+          chatHistory: [],
+          createdBy: userId,
+          createdAt: now,
+          updatedAt: now,
+          isArchived: false,
+        };
+
+        set((s) => {
+          s.knowledgeBases[kb.id] = kb;
+        });
+
+        // Save to database
+        fetch("/api/knowledge-base", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            workspaceId,
+            name,
+            description,
+            icon: "📚",
+            color: "#ccff00",
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.knowledgeBase) {
+              // Update with real database ID
+              set((s) => {
+                const oldKb = s.knowledgeBases[kb.id];
+                delete s.knowledgeBases[kb.id];
+                s.knowledgeBases[data.knowledgeBase.id] = {
+                  ...oldKb,
+                  id: data.knowledgeBase.id,
+                  createdAt: data.knowledgeBase.created_at,
+                  updatedAt: data.knowledgeBase.updated_at,
+                };
+                if (s.currentKnowledgeBaseId === kb.id) {
+                  s.currentKnowledgeBaseId = data.knowledgeBase.id;
+                }
+              });
+            }
+          })
+          .catch((err) => console.error("Failed to save knowledge base:", err));
+
+        return kb;
+      },
+
+      updateKnowledgeBase: (id, updates) =>
+        set((state) => {
+          if (state.knowledgeBases[id]) {
+            state.knowledgeBases[id] = {
+              ...state.knowledgeBases[id],
+              ...updates,
+              updatedAt: new Date().toISOString(),
+            };
+          }
+        }),
+
+      deleteKnowledgeBase: (id) =>
+        set((state) => {
+          delete state.knowledgeBases[id];
+          if (state.currentKnowledgeBaseId === id) {
+            state.currentKnowledgeBaseId = null;
+          }
+        }),
+
+      addSourceToKnowledgeBase: (knowledgeBaseId, source) => {
+        const state = get();
+        const userId = state.currentUser?.id || "anonymous";
+        const now = new Date().toISOString();
+
+        const newSource: KnowledgeSource = {
+          ...source,
+          id: generateId(),
+          knowledgeBaseId,
+          uploadedBy: userId,
+          uploadedAt: now,
+        };
+
+        set((s) => {
+          if (s.knowledgeBases[knowledgeBaseId]) {
+            s.knowledgeBases[knowledgeBaseId].sources.push(newSource);
+            s.knowledgeBases[knowledgeBaseId].updatedAt = now;
+          }
+        });
+
+        return newSource;
+      },
+
+      removeSourceFromKnowledgeBase: (knowledgeBaseId, sourceId) =>
+        set((state) => {
+          if (state.knowledgeBases[knowledgeBaseId]) {
+            state.knowledgeBases[knowledgeBaseId].sources = state.knowledgeBases[
+              knowledgeBaseId
+            ].sources.filter((s) => s.id !== sourceId);
+            state.knowledgeBases[knowledgeBaseId].updatedAt = new Date().toISOString();
+          }
+        }),
+
+      addChatMessage: (knowledgeBaseId, message) =>
+        set((state) => {
+          if (state.knowledgeBases[knowledgeBaseId]) {
+            const chatMessage: ChatMessage = {
+              ...message,
+              id: generateId(),
+              timestamp: new Date().toISOString(),
+            };
+            state.knowledgeBases[knowledgeBaseId].chatHistory.push(chatMessage);
+            state.knowledgeBases[knowledgeBaseId].updatedAt = new Date().toISOString();
+          }
+        }),
+
+      clearChatHistory: (knowledgeBaseId) =>
+        set((state) => {
+          if (state.knowledgeBases[knowledgeBaseId]) {
+            state.knowledgeBases[knowledgeBaseId].chatHistory = [];
+            state.knowledgeBases[knowledgeBaseId].updatedAt = new Date().toISOString();
+          }
+        }),
     })),
     {
       name: "notion-clone-storage",
@@ -1296,6 +1465,8 @@ export const useAppStore = create<AppState>()(
         databaseRows: state.databaseRows,
         sidebarWidth: state.sidebarWidth,
         expandedPageIds: Array.from(state.expandedPageIds),
+        knowledgeBases: state.knowledgeBases,
+        currentKnowledgeBaseId: state.currentKnowledgeBaseId,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {

@@ -63,7 +63,7 @@ export function PropertyStack({ page, propertyIds, sections, className }: Proper
     const renderProperty = (property: DatabaseProperty) => (
         <div key={property.id} className="flex py-2 group min-h-[36px]">
             {/* Label */}
-            <div className="w-[160px] flex items-center gap-2 text-sm text-neutral-500 font-normal shrink-0">
+            <div className="w-[160px] flex items-center gap-2 text-sm text-neutral-300 font-normal shrink-0">
                 <span className="truncate">{property.name}</span>
             </div>
 

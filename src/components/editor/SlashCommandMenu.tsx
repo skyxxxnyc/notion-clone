@@ -16,6 +16,8 @@ import {
   Minus,
   Link,
   Sparkles,
+  Upload,
+  Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { generateContent } from "@/actions/ai";
@@ -165,6 +167,26 @@ const commands: CommandItem[] = [
       if (url) {
         editor.chain().focus().setImage({ src: url }).run();
       }
+    },
+  },
+  {
+    title: "File Upload",
+    description: "Upload files and attachments",
+    icon: <Upload className="h-4 w-4" />,
+    keywords: ["file", "upload", "attachment", "document", "pdf"],
+    command: (editor) => {
+      // Insert a placeholder for file upload component
+      editor.chain().focus().insertContent('<div class="file-upload-block" data-type="file-upload"></div>').run();
+    },
+  },
+  {
+    title: "Image Gallery",
+    description: "Create a gallery of images",
+    icon: <Images className="h-4 w-4" />,
+    keywords: ["gallery", "images", "photos", "pictures", "carousel"],
+    command: (editor) => {
+      // Insert a placeholder for image gallery component
+      editor.chain().focus().insertContent('<div class="image-gallery-block" data-type="image-gallery"></div>').run();
     },
   },
   {
