@@ -173,11 +173,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if (fileId) {
+      const { data, error } = await supabase
+        .from("files")
+        .select("*")
+        .eq("id", fileId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching file:", error);
+        return NextResponse.json(
+          { error: "Failed to fetch file", details: error.message },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ file: data });
+    }
+
     let query = supabase.from("files").select("*");
 
-    if (fileId) {
-      query = query.eq("id", fileId).single();
-    } else if (pageId) {
+    if (pageId) {
       query = query.eq("page_id", pageId).order("uploaded_at", { ascending: false });
     } else if (workspaceId) {
       query = query.eq("workspace_id", workspaceId).order("uploaded_at", { ascending: false });
@@ -198,7 +214,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(fileId ? { file: data } : { files: data });
+    return NextResponse.json({ files: data });
   } catch (error: any) {
     console.error("Error in files GET:", error);
     return NextResponse.json(

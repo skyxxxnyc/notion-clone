@@ -53,7 +53,7 @@ async function callPerplexity(systemPrompt: string, userPrompt: string, maxToken
                 Authorization: `Bearer ${apiKey}`,
             },
             body: JSON.stringify({
-                model: "llama-3.1-sonar-small-128k-chat",
+                model: "sonar-pro",
                 messages: [
                     { role: "system", content: systemPrompt },
                     { role: "user", content: userPrompt },
@@ -591,5 +591,102 @@ Generate a complete page structure with content.`;
             throw new Error(`Failed to generate page: ${error.message}`);
         }
         throw new Error("Failed to generate page");
+    }
+}
+
+// ============================================================================
+// AGENT OS - Multi-Modal Agent Chat
+// ============================================================================
+
+export interface AgentChatMessage {
+    role: "user" | "assistant";
+    content: string;
+}
+
+export interface AgentChatContext {
+    pageContent?: string;
+    pageTitle?: string;
+    selectedText?: string;
+    history?: AgentChatMessage[];
+}
+
+/**
+ * Multi-modal agent chat with custom mode instructions
+ */
+export async function agentChat(
+    message: string,
+    modeSystemPrompt: string,
+    modePersonality?: string,
+    context?: AgentChatContext
+): Promise<string> {
+    // Build the full system prompt with mode instructions
+    let systemPrompt = modeSystemPrompt;
+
+    if (modePersonality) {
+        systemPrompt += `\n\nPersonality: ${modePersonality}`;
+    }
+
+    // Add context information
+    if (context?.pageTitle) {
+        systemPrompt += `\n\nCurrent page: "${context.pageTitle}"`;
+    }
+
+    if (context?.pageContent) {
+        const truncatedContent = context.pageContent.slice(0, 3000);
+        systemPrompt += `\n\nPage content:\n${truncatedContent}${context.pageContent.length > 3000 ? "\n[...content truncated]" : ""}`;
+    }
+
+    if (context?.selectedText) {
+        systemPrompt += `\n\nUser has selected the following text:\n"${context.selectedText}"`;
+    }
+
+    // Build conversation history
+    let userPrompt = "";
+
+    if (context?.history && context.history.length > 0) {
+        // Include last 10 messages for context
+        const recentHistory = context.history.slice(-10);
+        userPrompt += "Previous conversation:\n";
+        for (const msg of recentHistory) {
+            userPrompt += `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content}\n`;
+        }
+        userPrompt += "\n---\n\n";
+    }
+
+    userPrompt += `User: ${message}`;
+
+    try {
+        const response = await generateWithAI(systemPrompt, userPrompt, 2000);
+        return response.trim();
+    } catch (error) {
+        console.error("Agent chat failed:", error);
+        throw new Error("Failed to generate response. Please try again.");
+    }
+}
+
+/**
+ * Quick agent action for common tasks
+ */
+export async function agentAction(
+    action: "summarize" | "explain" | "translate" | "brainstorm" | "action_items",
+    content: string,
+    options?: { language?: string; topic?: string }
+): Promise<string> {
+    const actionPrompts: Record<string, string> = {
+        summarize: `Summarize the following content concisely. Focus on key points and main ideas. Use bullet points for clarity.`,
+        explain: `Explain the following content in simple terms. Make it easy to understand for someone unfamiliar with the topic.`,
+        translate: `Translate the following content to ${options?.language || "Spanish"}. Maintain the original meaning and tone.`,
+        brainstorm: `Generate creative ideas related to: ${options?.topic || "the following content"}. Provide 5-7 unique, actionable ideas.`,
+        action_items: `Extract all action items from the following content. Format as a checklist with clear owners and deadlines if mentioned.`,
+    };
+
+    const systemPrompt = actionPrompts[action] || actionPrompts.summarize;
+
+    try {
+        const response = await generateWithAI(systemPrompt, content, 1500);
+        return response.trim();
+    } catch (error) {
+        console.error(`Agent action "${action}" failed:`, error);
+        throw new Error(`Failed to ${action}. Please try again.`);
     }
 }

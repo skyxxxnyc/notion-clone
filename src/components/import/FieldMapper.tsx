@@ -20,7 +20,7 @@ interface FieldMapperProps {
 }
 
 const PROPERTY_TYPES: PropertyType[] = [
-    "text", "number", "select", "multiSelect", "date",
+    "text", "number", "select", "multiSelect", "tags", "date",
     "checkbox", "url", "email", "phone", "status"
 ];
 

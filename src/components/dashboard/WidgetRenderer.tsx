@@ -54,28 +54,28 @@ export function WidgetRenderer({ widget, isEditing, onRemove, onMove }: WidgetRe
                         <>
                             <button
                                 onClick={() => onMove("up")}
-                                className="p-1 bg-white border border-neutral-200 rounded shadow-sm hover:bg-neutral-50"
+                                className="p-1 bg-white border border-neutral-200 rounded shadow-sm hover:bg-neutral-50 text-neutral-900"
                                 title="Move up"
                             >
                                 <ArrowUp className="h-3 w-3" />
                             </button>
                             <button
                                 onClick={() => onMove("down")}
-                                className="p-1 bg-white border border-neutral-200 rounded shadow-sm hover:bg-neutral-50"
+                                className="p-1 bg-white border border-neutral-200 rounded shadow-sm hover:bg-neutral-50 text-neutral-900"
                                 title="Move down"
                             >
                                 <ArrowDown className="h-3 w-3" />
                             </button>
                             <button
                                 onClick={() => onMove("left")}
-                                className="p-1 bg-white border border-neutral-200 rounded shadow-sm hover:bg-neutral-50"
+                                className="p-1 bg-white border border-neutral-200 rounded shadow-sm hover:bg-neutral-50 text-neutral-900"
                                 title="Move left"
                             >
                                 <ArrowLeft className="h-3 w-3" />
                             </button>
                             <button
                                 onClick={() => onMove("right")}
-                                className="p-1 bg-white border border-neutral-200 rounded shadow-sm hover:bg-neutral-50"
+                                className="p-1 bg-white border border-neutral-200 rounded shadow-sm hover:bg-neutral-50 text-neutral-900"
                                 title="Move right"
                             >
                                 <ArrowRight className="h-3 w-3" />

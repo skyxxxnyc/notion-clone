@@ -47,7 +47,7 @@ export function TemplateBrowser({ onClose, workspaceId }: TemplateBrowserProps) 
                     await updatePage(newPageId, {
                         databaseConfig: {
                             ...template.databaseConfig,
-                            layout: template.layout || "table" // Fallback layout
+                            layout: (template.layout as any) // Fallback layout
                         }
                     });
                 }

@@ -23,7 +23,7 @@ interface SourceManagerProps {
 }
 
 export function SourceManager({ knowledgeBase }: SourceManagerProps) {
-  const { addSourceToKnowledgeBase, removeSourceFromKnowledgeBase } =
+  const { addSourceToKnowledgeBase, updateSourceInKnowledgeBase, removeSourceFromKnowledgeBase } =
     useAppStore();
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -31,6 +31,52 @@ export function SourceManager({ knowledgeBase }: SourceManagerProps) {
   const [showYoutubeInput, setShowYoutubeInput] = useState(false);
   const [urlInput, setUrlInput] = useState("");
   const [youtubeInput, setYoutubeInput] = useState("");
+
+  // Poll for processing sources to update their status
+  React.useEffect(() => {
+    const processingSources = knowledgeBase.sources.filter(
+      (s) => s.status === "processing" || s.status === "uploading"
+    );
+
+    if (processingSources.length === 0) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(
+          `/api/knowledge-base/sources?knowledgeBaseId=${knowledgeBase.id}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          // Update sources in the store
+          data.sources.forEach((dbSource: any) => {
+            const localSource = knowledgeBase.sources.find(
+              (s) => s.id === dbSource.id
+            );
+            if (
+              localSource &&
+              localSource.status !== dbSource.status
+            ) {
+              console.log(
+                `Source ${dbSource.name} updated to status: ${dbSource.status}`
+              );
+              // Update the source status in the store
+              updateSourceInKnowledgeBase(knowledgeBase.id, dbSource.id, {
+                status: dbSource.status,
+                content: dbSource.content,
+                metadata: dbSource.metadata,
+                processedAt: dbSource.processed_at,
+                error: dbSource.error,
+              });
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error polling sources:", error);
+      }
+    }, 3000); // Poll every 3 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [knowledgeBase.sources, knowledgeBase.id, updateSourceInKnowledgeBase]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -118,41 +164,53 @@ export function SourceManager({ knowledgeBase }: SourceManagerProps) {
     if (!urlInput.trim()) return;
 
     setIsUploading(true);
+    const urls = urlInput.split(/[\n,]+/).map(u => u.trim()).filter(Boolean);
+    let successCount = 0;
 
-    try {
-      // Extract domain name for display
-      const url = new URL(urlInput);
-      const domain = url.hostname.replace("www.", "");
+    for (const urlStr of urls) {
+      try {
+        let url: URL;
+        try {
+          url = new URL(urlStr);
+        } catch {
+          console.warn(`Skipping invalid URL: ${urlStr}`);
+          continue;
+        }
 
-      // Call API to add web source
-      const response = await fetch("/api/knowledge-base/sources", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          knowledgeBaseId: knowledgeBase.id,
-          name: `${domain} - ${url.pathname}`,
-          type: "web",
-          url: urlInput,
-        }),
-      });
+        // Extract domain name for display
+        const domain = url.hostname.replace("www.", "");
 
-      if (response.ok) {
-        const data = await response.json();
-        // Update local store with the new source
-        addSourceToKnowledgeBase(knowledgeBase.id, data.source);
-        console.log("Added URL source:", data.source);
-        setUrlInput("");
-        setShowUrlInput(false);
-      } else {
-        const error = await response.json();
-        console.error("Failed to add URL:", error);
-        alert(`Failed to add URL: ${error.error}`);
+        // Call API to add web source
+        const response = await fetch("/api/knowledge-base/sources", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            knowledgeBaseId: knowledgeBase.id,
+            name: `${domain} - ${url.pathname}`,
+            type: "web",
+            url: urlStr,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Update local store with the new source
+          addSourceToKnowledgeBase(knowledgeBase.id, data.source);
+          console.log("Added URL source:", data.source);
+          successCount++;
+        } else {
+          const error = await response.json();
+          console.error(`Failed to add URL ${urlStr}:`, error);
+        }
+      } catch (error) {
+        console.error(`Invalid URL ${urlStr}:`, error);
       }
-    } catch (error) {
-      console.error("Invalid URL:", error);
-      alert("Please enter a valid URL");
     }
 
+    if (successCount > 0) {
+      setUrlInput("");
+      setShowUrlInput(false);
+    }
     setIsUploading(false);
   };
 
@@ -160,74 +218,97 @@ export function SourceManager({ knowledgeBase }: SourceManagerProps) {
     if (!youtubeInput.trim()) return;
 
     setIsUploading(true);
+    const inputs = youtubeInput.split(/[\n,]+/).map(u => u.trim()).filter(Boolean);
+    let successCount = 0;
 
-    try {
-      // Extract video ID from various YouTube URL formats
-      let videoId = "";
-      const url = youtubeInput.trim();
-
-      if (url.includes("youtube.com/watch?v=")) {
-        videoId = new URL(url).searchParams.get("v") || "";
-      } else if (url.includes("youtu.be/")) {
-        videoId = url.split("youtu.be/")[1]?.split("?")[0] || "";
-      } else if (url.includes("youtube.com/embed/")) {
-        videoId = url.split("youtube.com/embed/")[1]?.split("?")[0] || "";
-      } else {
-        // Assume it's just the video ID
-        videoId = url;
-      }
-
-      if (!videoId) {
-        alert("Please enter a valid YouTube URL or video ID");
-        setIsUploading(false);
-        return;
-      }
-
-      // Fetch video metadata using our API
-      let videoTitle = `YouTube - ${videoId}`;
-      let duration = undefined;
-      let author = undefined;
-
+    for (const input of inputs) {
       try {
-        const response = await fetch("/api/youtube", {
+        // Extract video ID from various YouTube URL formats
+        let videoId = "";
+        const url = input;
+
+        if (url.includes("youtube.com/watch?v=")) {
+          videoId = new URL(url).searchParams.get("v") || "";
+        } else if (url.includes("youtu.be/")) {
+          videoId = url.split("youtu.be/")[1]?.split("?")[0] || "";
+        } else if (url.includes("youtube.com/embed/")) {
+          videoId = url.split("youtube.com/embed/")[1]?.split("?")[0] || "";
+        } else {
+          // Check if it's a URL or just ID
+          if (url.startsWith('http')) {
+            try {
+              const u = new URL(url);
+              if (u.hostname.includes('youtube')) {
+                videoId = u.searchParams.get("v") || "";
+              }
+            } catch { }
+          }
+          // Fallback to treating as ID if not found above
+          if (!videoId) videoId = url;
+        }
+
+        if (!videoId) {
+          console.warn(`Skipping invalid video input: ${input}`);
+          continue;
+        }
+
+        // Fetch video metadata using our API
+        let videoTitle = `YouTube - ${videoId}`;
+        let duration = undefined;
+        let author = undefined;
+
+        try {
+          const response = await fetch("/api/youtube", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ videoId }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            videoTitle = data.title || videoTitle;
+            duration = data.duration;
+            author = data.author;
+          }
+        } catch (fetchError) {
+          console.warn("Could not fetch YouTube metadata:", fetchError);
+        }
+
+        // Add the source via API to process it properly
+        const response = await fetch("/api/knowledge-base/sources", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ videoId }),
+          body: JSON.stringify({
+            knowledgeBaseId: knowledgeBase.id,
+            name: videoTitle,
+            type: "video",
+            url: `https://www.youtube.com/watch?v=${videoId}`,
+            metadata: {
+              duration,
+              author,
+              videoId,
+            },
+          }),
         });
 
         if (response.ok) {
           const data = await response.json();
-          videoTitle = data.title || videoTitle;
-          duration = data.duration;
-          author = data.author;
+          addSourceToKnowledgeBase(knowledgeBase.id, data.source);
+          console.log("Added YouTube source:", data.source);
+          successCount++;
         } else {
-          console.warn("Could not fetch YouTube metadata");
+          const error = await response.json();
+          console.error(`Failed to add YouTube video ${videoId}:`, error);
         }
-      } catch (fetchError) {
-        console.warn("Could not fetch YouTube metadata:", fetchError);
+      } catch (error) {
+        console.error(`Error processing YouTube input ${input}:`, error);
       }
-
-      // Add the source with the fetched metadata
-      const newSource = addSourceToKnowledgeBase(knowledgeBase.id, {
-        name: videoTitle,
-        type: "video",
-        status: "ready",
-        url: `https://www.youtube.com/watch?v=${videoId}`,
-        metadata: {
-          duration,
-          author,
-        },
-        content: `Video: ${videoTitle}`,
-      });
-
-      console.log("Added YouTube source:", newSource);
-      setYoutubeInput("");
-      setShowYoutubeInput(false);
-    } catch (error) {
-      console.error("Invalid YouTube URL:", error);
-      alert("Please enter a valid YouTube URL");
     }
 
+    if (successCount > 0) {
+      setYoutubeInput("");
+      setShowYoutubeInput(false);
+    }
     setIsUploading(false);
   };
 
@@ -327,20 +408,19 @@ export function SourceManager({ knowledgeBase }: SourceManagerProps) {
                 ADD WEB URL
               </span>
             </div>
-            <input
-              type="url"
-              placeholder="https://example.com/article"
+            <textarea
+              placeholder="https://example.com/article&#10;https://another.com/post"
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddUrl();
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleAddUrl();
                 if (e.key === "Escape") {
                   setShowUrlInput(false);
                   setUrlInput("");
                 }
               }}
-              className="neo-input"
-              style={{ fontSize: "12px" }}
+              className="neo-input min-h-[100px] resize-y"
+              style={{ fontSize: "12px", fontFamily: "var(--font-mono)" }}
               autoFocus
             />
             <div style={{ display: "flex", gap: "8px" }}>
@@ -375,20 +455,19 @@ export function SourceManager({ knowledgeBase }: SourceManagerProps) {
                 ADD YOUTUBE VIDEO
               </span>
             </div>
-            <input
-              type="text"
-              placeholder="https://youtube.com/watch?v=... or video ID"
+            <textarea
+              placeholder="https://youtube.com/watch?v=...&#10;https://youtu.be/..."
               value={youtubeInput}
               onChange={(e) => setYoutubeInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddYoutube();
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleAddYoutube();
                 if (e.key === "Escape") {
                   setShowYoutubeInput(false);
                   setYoutubeInput("");
                 }
               }}
-              className="neo-input"
-              style={{ fontSize: "12px" }}
+              className="neo-input min-h-[100px] resize-y"
+              style={{ fontSize: "12px", fontFamily: "var(--font-mono)" }}
               autoFocus
             />
             <div style={{ display: "flex", gap: "8px" }}>

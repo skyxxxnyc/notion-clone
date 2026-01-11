@@ -107,13 +107,14 @@ export async function fetchFeedItems(feeds: NewsFeed[]): Promise<NewsItem[]> {
                 }
 
                 return {
-                    id: item.guid || item.link || Math.random().toString(),
+                    // Ensure uniqueness across feeds by prefixing with feed ID
+                    id: `${feed.id}-${item.guid || item.link || Math.random().toString()}`,
                     title: item.title || "Untitled",
                     link: item.link || "#",
                     pubDate: item.pubDate || new Date().toISOString(),
                     content: item.content,
                     contentSnippet: item.contentSnippet,
-                    author: item.creator || item.author,
+                    author: item.creator || (item as any).author,
                     thumbnail,
                     feedId: feed.id,
                     feedName: feed.name,

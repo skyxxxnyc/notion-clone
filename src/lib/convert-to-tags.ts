@@ -79,7 +79,7 @@ export function convertRowDataToTags(
 
     if (Array.isArray(value)) {
       // Already array, just ensure strings
-      tagArray = value.filter((v) => typeof v === 'string' && v.trim());
+      tagArray = value.filter((v): v is string => typeof v === 'string' && !!v.trim());
     } else if (typeof value === 'string' && value.trim()) {
       // Convert single value to array
       tagArray = [value.trim()];
@@ -168,4 +168,43 @@ export function suggestTags(content: string, maxTags: number = 5): string[] {
   });
 
   return Array.from(candidates).slice(0, maxTags);
+}
+
+/**
+ * Split comma-separated tags in existing rows
+ * Converts tags like "React, TypeScript, Node.js" into ["React", "TypeScript", "Node.js"]
+ */
+export function splitCommaSeparatedTags(
+  rows: DatabaseRow[],
+  propertyId: string
+): DatabaseRow[] {
+  return rows.map((row) => {
+    const value = row.properties[propertyId];
+    let tagArray: string[] = [];
+
+    if (Array.isArray(value)) {
+      // Process each item in the array
+      value.forEach((item) => {
+        if (typeof item === 'string') {
+          // Split by comma and add all individual tags
+          const splitTags = parseTagInput(item);
+          tagArray.push(...splitTags);
+        }
+      });
+    } else if (typeof value === 'string' && value.trim()) {
+      // Split single string value by commas
+      tagArray = parseTagInput(value);
+    }
+
+    // Remove duplicates and empty strings
+    const uniqueTags = Array.from(new Set(tagArray.filter(tag => tag.trim())));
+
+    return {
+      ...row,
+      properties: {
+        ...row.properties,
+        [propertyId]: uniqueTags,
+      },
+    };
+  });
 }

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useAppStore } from "@/store";
-import { BlockEditor } from "@/components/editor/BlockEditor";
+import { BlockNoteEditor } from "@/components/editor/BlockNoteEditor";
 import { ChevronRight, X } from "lucide-react";
 import "./premium-page-view.css";
 
@@ -15,13 +15,19 @@ export function PremiumPageView({ pageId }: PremiumPageViewProps) {
     const page = pages[pageId];
     const parentPage = page?.parentId ? pages[page.parentId] : null;
 
-    const [editorContent, setEditorContent] = useState("");
-    const [properties, setProperties] = useState({
-        platform: page?.properties?.platform || "",
-        objective: page?.properties?.objective || "",
-        category: page?.properties?.category || "",
-        tags: page?.properties?.tags || [],
-        type: page?.properties?.type || "",
+    const [editorBlocks, setEditorBlocks] = useState<any[]>([]);
+    const [properties, setProperties] = useState<{
+        platform: string;
+        objective: string;
+        category: string;
+        tags: string[];
+        type: string;
+    }>({
+        platform: (page?.properties?.platform as string) || "",
+        objective: (page?.properties?.objective as string) || "",
+        category: (page?.properties?.category as string) || "",
+        tags: (page?.properties?.tags as string[]) || [],
+        type: (page?.properties?.type as string) || "",
     });
 
     const handleTitleChange = useCallback(
@@ -66,8 +72,8 @@ export function PremiumPageView({ pageId }: PremiumPageViewProps) {
     );
 
     const handleContentChange = useCallback(
-        (html: string, json?: any) => {
-            setEditorContent(html);
+        (blocks: any[]) => {
+            setEditorBlocks(blocks);
         },
         []
     );
@@ -154,11 +160,9 @@ export function PremiumPageView({ pageId }: PremiumPageViewProps) {
 
                     {/* Editor */}
                     <div className="page-editor-content">
-                        <BlockEditor
-                            content={editorContent}
+                        <BlockNoteEditor
+                            initialBlocks={page.blocks || []}
                             onChange={handleContentChange}
-                            pageId={pageId}
-                            placeholder="Start writing..."
                         />
                     </div>
                 </div>

@@ -44,15 +44,53 @@ const VIEW_ICONS: Record<DatabaseViewType, React.ReactNode> = {
 };
 
 export function DatabaseView({ page }: DatabaseViewProps) {
-  const { databaseRows, createDatabaseRow } = useAppStore();
+  const { databaseRows, createDatabaseRow, updatePage } = useAppStore();
 
   const [currentViewType, setCurrentViewType] = useState<DatabaseViewType>("table");
   const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState<Filter[]>([]);
-  const [sorts, setSorts] = useState<Sort[]>([]);
-
   const rows = databaseRows[page.id] || [];
   const config = page.databaseConfig;
+
+  // Find active view config or default to first view
+  const activeViewId = config?.defaultViewId;
+  const activeView = config?.views?.find(v => v.type === currentViewType) || config?.views?.[0];
+
+  // Initialize state from persisted config if available
+  const [filters, setFilters] = useState<Filter[]>(activeView?.filters || []);
+  const [sorts, setSorts] = useState<Sort[]>(activeView?.sorts || []);
+
+  // Update local state when view changes
+  React.useEffect(() => {
+    if (activeView) {
+      setFilters(activeView.filters || []);
+      setSorts(activeView.sorts || []);
+    }
+  }, [activeView?.id, currentViewType]);
+
+  const handleDisplayFiltersChange = (newFilters: Filter[]) => {
+    setFilters(newFilters);
+    saveViewConfig({ filters: newFilters });
+  };
+
+  const handleDisplaySortsChange = (newSorts: Sort[]) => {
+    setSorts(newSorts);
+    saveViewConfig({ sorts: newSorts });
+  };
+
+  const saveViewConfig = async (updates: Partial<typeof activeView>) => {
+    if (!config || !activeView) return;
+
+    const newViews = config.views.map(v =>
+      v.id === activeView.id ? { ...v, ...updates } : v
+    );
+
+    await updatePage(page.id, {
+      databaseConfig: {
+        ...config,
+        views: newViews
+      }
+    });
+  };
 
   const handleAddRow = () => {
     createDatabaseRow(page.id);
@@ -203,14 +241,14 @@ export function DatabaseView({ page }: DatabaseViewProps) {
           <FilterMenu
             properties={config?.properties || []}
             filters={filters}
-            onChange={setFilters}
+            onChange={handleDisplayFiltersChange}
           />
 
           {/* Sort */}
           <SortMenu
             properties={config?.properties || []}
             sorts={sorts}
-            onChange={setSorts}
+            onChange={handleDisplaySortsChange}
           />
 
           {/* More */}

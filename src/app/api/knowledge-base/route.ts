@@ -43,11 +43,14 @@ export async function GET(request: NextRequest) {
 // POST - Create new knowledge base
 export async function POST(request: NextRequest) {
   try {
+    console.log("=== Creating knowledge base ===");
     const supabase = await createClient();
     const body = await request.json();
     const { workspaceId, name, description, icon, color } = body;
+    console.log("Request body:", { workspaceId, name, description, icon, color });
 
     if (!workspaceId || !name) {
+      console.log("Missing required fields");
       return NextResponse.json(
         { error: "Workspace ID and name are required" },
         { status: 400 }
@@ -55,14 +58,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Get current user
+    console.log("Getting current user...");
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    console.log("User:", user?.id);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    console.log("Inserting knowledge base into database...");
     const { data, error } = await supabase
       .from("knowledge_bases")
       .insert({
@@ -84,6 +90,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log("Knowledge base created successfully:", data.id);
     return NextResponse.json({ knowledgeBase: data }, { status: 201 });
   } catch (error: any) {
     console.error("Error in knowledge base POST:", error);

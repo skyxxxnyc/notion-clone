@@ -2,6 +2,7 @@
 
 import React, { useEffect } from "react";
 import { useAppStore } from "@/store";
+import { useAgentStore } from "@/store/agentStore";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { PageView } from "@/components/page/PageView";
 import { PremiumPageView } from "@/components/page/PremiumPageView";
@@ -13,6 +14,7 @@ import { AuthPage } from "@/components/auth/AuthPage";
 import { cn } from "@/lib/utils";
 import PremiumDashboard from "@/components/dashboard/PremiumDashboard";
 import { NewsLayout } from "@/components/news/NewsLayout";
+import { AgentPanel } from "@/components/agent/AgentPanel";
 
 export function AppLayout() {
   const {
@@ -48,13 +50,18 @@ export function AppLayout() {
       if ((e.metaKey || e.ctrlKey) && e.key === "n") {
         e.preventDefault();
         if (currentWorkspaceId && currentUser) {
-          // Use setTimeout to avoid conflict with browser shortcuts if any, though preventDefault should work
           createPage(null, "Untitled").then((newPage) => {
             if (newPage) {
               setCurrentPage(newPage.id);
             }
           });
         }
+      }
+
+      // Toggle AgentOS: Cmd/Ctrl + J
+      if ((e.metaKey || e.ctrlKey) && e.key === "j") {
+        e.preventDefault();
+        useAgentStore.getState().togglePanel();
       }
     };
 
@@ -99,6 +106,9 @@ export function AppLayout() {
         {/* Modals */}
         <QuickSearch />
         <SettingsDialog />
+
+        {/* AgentOS Panel */}
+        <AgentPanel />
       </div>
     </TooltipProvider>
   );

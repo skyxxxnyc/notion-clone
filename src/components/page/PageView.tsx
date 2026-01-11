@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useAppStore } from "@/store";
 import { cn } from "@/lib/utils";
-import { BlockEditor } from "@/components/editor/BlockEditor";
+import { BlockNoteEditor } from "@/components/editor/BlockNoteEditor";
 import { PageHeader } from "./PageHeader";
 import { PageBreadcrumb } from "./PageBreadcrumb";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -75,73 +75,23 @@ export function PageView({ pageId }: PageViewProps) {
     }
   }, [saveStatus]);
 
-  const debouncedSave = useDebounce(async (html: string, json: any) => {
-    if (!json?.content) return;
-
-    // Map Tiptap JSON nodes to our Block structure
-    const mappedBlocks: any[] = json.content.map((node: any) => {
-      let type: string = "text";
-      let content: string = "";
-
-      // Extract text content from node
-      const extractText = (n: any): string => {
-        if (n.text) return n.text;
-        if (n.content) return n.content.map(extractText).join("");
-        return "";
-      };
-
-      content = extractText(node);
-
-      switch (node.type) {
-        case "heading":
-          type = node.attrs.level === 1 ? "heading1" : node.attrs.level === 2 ? "heading2" : "heading3";
-          break;
-        case "bulletList":
-          type = "bulletList";
-          break;
-        case "orderedList":
-          type = "numberedList";
-          break;
-        case "taskList":
-          type = "todoList";
-          break;
-        case "blockquote":
-          type = "quote";
-          break;
-        case "codeBlock":
-          type = "code";
-          break;
-        case "horizontalRule":
-          type = "divider";
-          break;
-        case "image":
-          type = "image";
-          content = node.attrs.src;
-          break;
-        default:
-          type = "text";
-      }
-
-      return {
-        type,
-        content,
-        parentId: null,
-        properties: node.attrs || {},
-      };
-    });
+  const debouncedSave = useDebounce(async (blocks: any[]) => {
+    if (!blocks) return;
 
     try {
-      await savePageContent(pageId, mappedBlocks);
+      await savePageContent(pageId, blocks);
     } catch (error) {
       console.error("Auto-save failed:", error);
     }
   }, 1500);
 
   const handleContentChange = useCallback(
-    (html: string, json?: any) => {
-      setEditorContent(html);
+    (blocks: any[]) => {
+      // Extract text for AI analysis/search
+      const text = blocks.map(b => b.content).join("\n");
+      setEditorContent(text);
       setSaveStatus("unsaved");
-      debouncedSave(html, json);
+      debouncedSave(blocks);
     },
     [debouncedSave, setSaveStatus]
   );
@@ -156,40 +106,8 @@ export function PageView({ pageId }: PageViewProps) {
     }
   }, [pageId, fetchBlocks]);
 
-  // Update editor content when page or blocks change
-  useEffect(() => {
-    if (page?.blocks && !isLoaded) { // Only set on initial load to avoid jumping during typing
-      const html = page.blocks
-        .map((block) => {
-          switch (block.type) {
-            case "heading1":
-              return `<h1>${block.content}</h1>`;
-            case "heading2":
-              return `<h2>${block.content}</h2>`;
-            case "heading3":
-              return `<h3>${block.content}</h3>`;
-            case "bulletList":
-              return `<ul><li>${block.content}</li></ul>`;
-            case "numberedList":
-              return `<ol><li>${block.content}</li></ol>`;
-            case "todoList":
-              return `<ul data-type="taskList"><li data-type="taskItem"><label><input type="checkbox"><span>${block.content}</span></label></li></ul>`;
-            case "quote":
-              return `<blockquote>${block.content}</blockquote>`;
-            case "code":
-              return `<pre><code>${block.content}</code></pre>`;
-            case "divider":
-              return `<hr />`;
-            case "image":
-              return `<img src="${block.content}" alt="Image" />`;
-            default:
-              return `<p>${block.content}</p>`;
-          }
-        })
-        .join("");
-      setEditorContent(html || "<p></p>");
-    }
-  }, [page?.blocks, isLoaded]);
+  // Placeholder for any initialization if needed, but BlockNote handles initialBlocks
+
 
   const handleTitleChange = useCallback(
     (title: string) => {
@@ -221,6 +139,10 @@ export function PageView({ pageId }: PageViewProps) {
     if (window.confirm("Are you sure you want to delete this page?")) {
       await deletePage(pageId);
     }
+  };
+
+  const handleToggleFullWidth = async () => {
+    await updatePage(pageId, { fullWidth: !page.fullWidth });
   };
 
   // AI Feature Handlers
@@ -418,6 +340,10 @@ export function PageView({ pageId }: PageViewProps) {
               <DropdownMenuItem onClick={handleDuplicate}>
                 Duplicate
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleToggleFullWidth} className="justify-between">
+                Full width
+                {page.fullWidth && <Check className="h-4 w-4" />}
+              </DropdownMenuItem>
               <DropdownMenuItem>Export</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Page history</DropdownMenuItem>
@@ -445,7 +371,10 @@ export function PageView({ pageId }: PageViewProps) {
             onContentChange={handleContentChange}
           />
         ) : (
-          <div className="max-w-4xl mx-auto px-16 py-12">
+          <div className={cn(
+            "mx-auto py-12 transition-all duration-300",
+            page.fullWidth ? "max-w-full px-24" : "max-w-4xl px-16"
+          )}>
             <PageHeader
               page={page}
               onTitleChange={handleTitleChange}
@@ -454,11 +383,9 @@ export function PageView({ pageId }: PageViewProps) {
             />
 
             <div className="mt-8">
-              <BlockEditor
-                content={editorContent}
+              <BlockNoteEditor
+                initialBlocks={page.blocks || []}
                 onChange={handleContentChange}
-                pageId={pageId}
-                placeholder="Press '/' for commands, or just start typing..."
               />
             </div>
           </div>

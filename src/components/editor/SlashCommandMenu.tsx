@@ -359,7 +359,7 @@ export function SlashCommandMenu({ editor }: SlashCommandMenuProps) {
               {item.title === "Ask AI" ? (
                 <Sparkles className="h-4 w-4 text-[#ccff00]" />
               ) : (
-                React.cloneElement(item.icon as React.ReactElement, { className: "h-4 w-4 text-neutral-400" })
+                React.cloneElement(item.icon as any, { className: "h-4 w-4 text-neutral-400" })
               )}
             </div>
             <div>

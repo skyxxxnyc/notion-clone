@@ -20,6 +20,7 @@ const mapPage = (row: any): Page => ({
     isTemplate: row.is_template,
     isDatabase: row.is_database,
     databaseConfig: row.database_config,
+    fullWidth: row.full_width,
     properties: row.database_config?.values || row.properties || {},
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -136,6 +137,7 @@ export async function updatePage(id: string, updates: any) {
         isTemplate: "is_template",
         isDatabase: "is_database",
         databaseConfig: "database_config",
+        fullWidth: "full_width",
     };
 
     Object.keys(updates).forEach((key) => {

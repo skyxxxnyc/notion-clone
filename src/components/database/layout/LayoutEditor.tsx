@@ -247,21 +247,21 @@ export function LayoutEditor({ initialLayout, onSave, onCancel, databaseProperti
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setShowPresetPicker(true)}
-                            className="text-xs px-2 py-1 rounded bg-white border border-neutral-200 hover:bg-neutral-50 flex items-center gap-1"
+                            className="text-xs px-2 py-1 rounded bg-white border border-neutral-200 hover:bg-neutral-50 flex items-center gap-1 text-neutral-900"
                         >
                             <Sparkles className="w-3 h-3" />
                             Presets
                         </button>
                         <button
                             onClick={toggleStructure}
-                            className="text-xs px-2 py-1 rounded bg-white border border-neutral-200 hover:bg-neutral-50"
+                            className="text-xs px-2 py-1 rounded bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-900"
                         >
                             {layout.structure === 'simple' ? '📄 Simple' : '📑 Tabbed'}
                         </button>
                         <select
                             value={layout.pageOpenMode || 'center_peek'}
                             onChange={(e) => setLayout(prev => ({ ...prev, pageOpenMode: e.target.value as any }))}
-                            className="text-xs px-2 py-1 rounded bg-white border border-neutral-200 hover:bg-neutral-50"
+                            className="text-xs px-2 py-1 rounded bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-900"
                         >
                             <option value="side_peek">Side Peek</option>
                             <option value="center_peek">Center Peek</option>
@@ -486,7 +486,7 @@ export function LayoutEditor({ initialLayout, onSave, onCancel, databaseProperti
                             </div>
                             <button
                                 onClick={() => setShowModulePicker(true)}
-                                className="text-xs px-2 py-1 flex items-center gap-1 bg-white border border-neutral-200 rounded hover:bg-neutral-50"
+                                className="text-xs px-2 py-1 flex items-center gap-1 bg-white border border-neutral-200 rounded hover:bg-neutral-50 text-neutral-900"
                             >
                                 <Plus className="w-3 h-3" />
                                 Add Module

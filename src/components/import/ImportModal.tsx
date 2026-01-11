@@ -110,13 +110,22 @@ export function ImportModal({ open, onOpenChange }: ImportModalProps) {
                 let options: any[] | undefined = undefined;
 
                 // Auto-generate options for select types
-                if (m.targetType === 'select' || m.targetType === 'multiSelect') {
+                if (m.targetType === 'select' || m.targetType === 'multiSelect' || m.targetType === 'tags') {
                     const uniqueValues = new Set<string>();
                     importData.rows.forEach(row => {
                         const val = row[m.sourceKey];
                         if (val) {
-                            if (Array.isArray(val)) val.forEach(v => uniqueValues.add(String(v)));
-                            else uniqueValues.add(String(val));
+                            if (Array.isArray(val)) {
+                                val.forEach(v => uniqueValues.add(String(v).trim()));
+                            } else {
+                                // For tags, split by comma to create separate tag entities
+                                if (m.targetType === 'tags') {
+                                    const tagValues = String(val).split(',').map(t => t.trim()).filter(t => t);
+                                    tagValues.forEach(t => uniqueValues.add(t));
+                                } else {
+                                    uniqueValues.add(String(val));
+                                }
+                            }
                         }
                     });
 
@@ -170,7 +179,7 @@ export function ImportModal({ open, onOpenChange }: ImportModalProps) {
                     const newId = generateId();
 
                     mappings.filter(m => m.enabled).forEach(m => {
-                        const value = row[m.sourceKey];
+                        let value = row[m.sourceKey];
                         let targetPropId = '';
 
                         if (m.isTitle) {
@@ -182,6 +191,10 @@ export function ImportModal({ open, onOpenChange }: ImportModalProps) {
                         }
 
                         if (targetPropId && targetPropId !== 'title') {
+                            // For tags property, split comma-separated values into array
+                            if (m.targetType === 'tags' && value && !Array.isArray(value)) {
+                                value = String(value).split(',').map(t => t.trim()).filter(t => t);
+                            }
                             rowProps[targetPropId] = value;
                         }
                     });

@@ -10,7 +10,7 @@ import { Settings2 } from "lucide-react";
 interface DatabasePageLayoutProps {
     page: Page;
     initialContent?: string;
-    onContentChange: (html: string, json: any) => void;
+    onContentChange: (blocks: any[]) => void;
 }
 
 export function DatabasePageLayout({
@@ -191,7 +191,7 @@ export function DatabasePageLayout({
             {layout.sidePanel && layout.sidePanel.length > 0 && (
                 <button
                     onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}
-                    className="fixed right-4 bottom-4 z-50 lg:hidden p-2 bg-white shadow-lg rounded-lg border border-neutral-200 hover:bg-neutral-50"
+                    className="fixed right-4 bottom-4 z-50 lg:hidden p-2 bg-white shadow-lg rounded-lg border border-neutral-200 hover:bg-neutral-50 text-neutral-900"
                     title={isSidePanelOpen ? "Hide panel" : "Show panel"}
                 >
                     <Settings2 className="h-4 w-4" />

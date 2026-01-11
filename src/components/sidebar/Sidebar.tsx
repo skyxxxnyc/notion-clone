@@ -20,6 +20,7 @@ import {
   Upload,
   Brain,
   Newspaper,
+  Sparkles,
 } from "lucide-react";
 import { PageTreeItem } from "./PageTreeItem";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
@@ -27,6 +28,7 @@ import { QuickSearch } from "./QuickSearch";
 import { ImportModal } from "../import/ImportModal";
 import { TemplateBrowser } from "../templates/TemplateBrowser";
 import { KnowtbookLM } from "../knowtbook/KnowtbookLM";
+import { useAgentStore } from "@/store/agentStore";
 
 interface SidebarProps {
   className?: string;
@@ -210,6 +212,14 @@ export function Sidebar({ className }: SidebarProps) {
         >
           <Brain className="h-4 w-4" />
           <span>KnowtbookLM</span>
+        </button>
+        <button
+          className="w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded transition-colors bg-[#ccff00]/10 text-[#ccff00] hover:bg-[#ccff00]/20"
+          onClick={() => useAgentStore.getState().togglePanel()}
+        >
+          <Sparkles className="h-4 w-4" />
+          <span>AgentOS</span>
+          <span className="ml-auto text-xs opacity-60">⌘J</span>
         </button>
       </div>
 

@@ -73,7 +73,7 @@ interface AppState {
   ) => void;
   duplicateBlock: (pageId: string, blockId: string) => Promise<Block>;
   fetchBlocks: (pageId: string) => Promise<void>;
-  savePageContent: (pageId: string, blocks: Partial<Block>[]) => Promise<void>;
+  savePageContent: (pageId: string, blocks: any[]) => Promise<void>;
 
   // Database rows
   databaseRows: Record<string, DatabaseRow[]>;
@@ -113,6 +113,7 @@ interface AppState {
   updateKnowledgeBase: (id: string, updates: Partial<KnowledgeBase>) => void;
   deleteKnowledgeBase: (id: string) => void;
   addSourceToKnowledgeBase: (knowledgeBaseId: string, source: Omit<KnowledgeSource, "id" | "knowledgeBaseId" | "uploadedAt">) => KnowledgeSource;
+  updateSourceInKnowledgeBase: (knowledgeBaseId: string, sourceId: string, updates: Partial<KnowledgeSource>) => void;
   removeSourceFromKnowledgeBase: (knowledgeBaseId: string, sourceId: string) => void;
   addChatMessage: (knowledgeBaseId: string, message: Omit<ChatMessage, "id" | "timestamp">) => void;
   clearChatHistory: (knowledgeBaseId: string) => void;
@@ -429,7 +430,10 @@ export const useAppStore = create<AppState>()(
       setCurrentPage: (id) =>
         set((state) => {
           state.currentPageId = id;
-          state.viewMode = "page";
+          // Only set viewMode to "page" if id is not null
+          if (id !== null) {
+            state.viewMode = "page";
+          }
         }),
 
       togglePageExpanded: (id) =>
@@ -1423,6 +1427,22 @@ export const useAppStore = create<AppState>()(
 
         return newSource;
       },
+
+      updateSourceInKnowledgeBase: (knowledgeBaseId, sourceId, updates) =>
+        set((state) => {
+          if (state.knowledgeBases[knowledgeBaseId]) {
+            const sourceIndex = state.knowledgeBases[knowledgeBaseId].sources.findIndex(
+              (s) => s.id === sourceId
+            );
+            if (sourceIndex !== -1) {
+              state.knowledgeBases[knowledgeBaseId].sources[sourceIndex] = {
+                ...state.knowledgeBases[knowledgeBaseId].sources[sourceIndex],
+                ...updates,
+              };
+              state.knowledgeBases[knowledgeBaseId].updatedAt = new Date().toISOString();
+            }
+          }
+        }),
 
       removeSourceFromKnowledgeBase: (knowledgeBaseId, sourceId) =>
         set((state) => {

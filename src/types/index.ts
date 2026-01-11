@@ -96,6 +96,8 @@ export interface Page {
   isTemplate: boolean;
   isDatabase: boolean;
   databaseConfig?: DatabaseConfig;
+  layout?: "default" | "premium";
+  fullWidth?: boolean;
   properties?: Record<string, PropertyValue>;
   children: string[]; // Page IDs
   blocks: Block[];

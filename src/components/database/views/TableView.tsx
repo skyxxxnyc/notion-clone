@@ -15,7 +15,8 @@ import {
   Type,
   ArrowLeftRight,
   Sparkles,
-  Loader2
+  Loader2,
+  Scissors
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,6 +53,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { generateCellContent, autoFillColumn, type RowData } from "@/actions/ai";
+import { SplitTagsDialog } from "@/components/database/SplitTagsDialog";
 
 interface TableViewProps {
   page: Page;
@@ -107,6 +109,7 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
   } | null>(null);
   const [highlightedPropertyId, setHighlightedPropertyId] = useState<string | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
+  const [splitTagsPropertyId, setSplitTagsPropertyId] = useState<string | null>(null);
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
@@ -234,6 +237,7 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
                 onToggleHighlight={() => setHighlightedPropertyId(curr => curr === property.id ? null : property.id)}
                 rows={rows}
                 databaseId={page.id}
+                onSplitTags={setSplitTagsPropertyId}
               />
             ))}
           </SortableContext>
@@ -366,6 +370,23 @@ export function TableView({ page, rows, onAddRow }: TableViewProps) {
           <Button size="sm" variant="ghost" onClick={() => setSelectedRowIds(new Set())}>Cancel</Button>
         </div>
       )}
+
+      {/* Split Tags Dialog */}
+      {splitTagsPropertyId && (() => {
+        const property = properties.find(p => p.id === splitTagsPropertyId);
+        return property ? (
+          <SplitTagsDialog
+            property={property}
+            rowsData={rows}
+            databaseId={page.id}
+            onComplete={() => {
+              // Refresh the page to show updated tags
+              window.location.reload();
+            }}
+            onClose={() => setSplitTagsPropertyId(null)}
+          />
+        ) : null;
+      })()}
     </div>
   );
 }
@@ -378,9 +399,10 @@ interface SortableHeaderProps {
   onToggleHighlight?: () => void;
   rows: DatabaseRow[];
   databaseId: string;
+  onSplitTags: (propertyId: string) => void;
 }
 
-function SortableHeader({ property, onUpdate, onDelete, isHighlighted, onToggleHighlight, rows, databaseId }: SortableHeaderProps) {
+function SortableHeader({ property, onUpdate, onDelete, isHighlighted, onToggleHighlight, rows, databaseId, onSplitTags }: SortableHeaderProps) {
   const { updateDatabaseRow, pages } = useAppStore();
   const {
     attributes,
@@ -566,6 +588,12 @@ function SortableHeader({ property, onUpdate, onDelete, isHighlighted, onToggleH
             <Sparkles className="h-3 w-3 mr-2" />
             Auto-fill column with AI
           </DropdownMenuItem>
+          {property.type === 'tags' && (
+            <DropdownMenuItem onClick={() => onSplitTags(property.id)}>
+              <Scissors className="h-3 w-3 mr-2" />
+              Split comma-separated tags
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => onUpdate(property.id, { isVisible: false })}>
             <EyeOff className="h-3 w-3 mr-2" />

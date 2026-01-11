@@ -2,7 +2,7 @@ import React from "react";
 import { LayoutModule, DatabaseLayout } from "@/types/layout";
 import { Page } from "@/types";
 import { PageHeader } from "@/components/page/PageHeader";
-import { BlockEditor } from "@/components/editor/BlockEditor";
+import { BlockNoteEditor } from "@/components/editor/BlockNoteEditor";
 import { PropertyStack } from "./PropertyStack";
 import { useAppStore } from "@/store";
 
@@ -11,7 +11,7 @@ interface Props {
     page: Page;
     layout: DatabaseLayout;
     content?: string;
-    onUpdateContent: (html: string, json: any) => void;
+    onUpdateContent: (blocks: any[]) => void;
     readOnly?: boolean;
 }
 
@@ -61,9 +61,8 @@ export function LayoutModuleRenderer({ module, page, layout, content, onUpdateCo
         case "content":
             return (
                 <div className="min-h-[400px]">
-                    <BlockEditor
-                        pageId={page.id}
-                        content={content || ""}
+                    <BlockNoteEditor
+                        initialBlocks={page.blocks || []}
                         onChange={onUpdateContent}
                         editable={!readOnly}
                     />

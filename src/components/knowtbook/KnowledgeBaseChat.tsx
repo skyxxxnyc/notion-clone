@@ -11,6 +11,41 @@ interface KnowledgeBaseChatProps {
   knowledgeBase: KnowledgeBase;
 }
 
+
+
+const formatMessageContent = (content: string) => {
+  // Split content by timestamp citation pattern: [Source Name, MM:SS]
+  const pattern = /\[(.*?),\s*(\d{1,2}:\d{2}(?::\d{2})?)\]/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = pattern.exec(content)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(content.substring(lastIndex, match.index));
+    }
+
+    parts.push(
+      <button
+        key={match.index}
+        className="inline-flex items-center gap-1 mx-1 px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium hover:underline cursor-pointer transition-colors"
+        onClick={() => console.log(`Jump to ${match![1]} at ${match![2]}`)}
+      >
+        <span>▶</span>
+        {match[1]} {match[2]}
+      </button>
+    );
+
+    lastIndex = pattern.lastIndex;
+  }
+
+  if (lastIndex < content.length) {
+    parts.push(content.substring(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : content;
+};
+
 export function KnowledgeBaseChat({ knowledgeBase }: KnowledgeBaseChatProps) {
   const { addChatMessage } = useAppStore();
   const [input, setInput] = useState("");
@@ -99,7 +134,7 @@ export function KnowledgeBaseChat({ knowledgeBase }: KnowledgeBaseChatProps) {
                   className={`knowledge-base-message ${message.role}`}
                 >
                   <div className="knowledge-base-message-content">
-                    {message.content}
+                    {formatMessageContent(message.content)}
                   </div>
 
                   {/* Source Citations */}

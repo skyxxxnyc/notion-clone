@@ -43,6 +43,40 @@ export function SettingsDialog() {
   const [activeSection, setActiveSection] = useState("account");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark" | "system">(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('theme') as "light" | "dark" | "system") || "dark";
+    }
+    return "dark";
+  });
+  const [textSize, setTextSize] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return parseInt(localStorage.getItem('textSize') || '14');
+    }
+    return 14;
+  });
+
+  // Apply theme
+  React.useEffect(() => {
+    const root = document.documentElement;
+
+    if (theme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.classList.toggle('dark', prefersDark);
+      root.classList.toggle('light', !prefersDark);
+    } else {
+      root.classList.toggle('dark', theme === 'dark');
+      root.classList.toggle('light', theme === 'light');
+    }
+
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  // Apply text size
+  React.useEffect(() => {
+    document.documentElement.style.fontSize = `${textSize}px`;
+    localStorage.setItem('textSize', textSize.toString());
+  }, [textSize]);
 
   const handleResetAccount = async () => {
     if (!window.confirm("Are you sure? This will delete ALL your workspaces and pages. This action is irreversible.")) return;
@@ -286,21 +320,28 @@ export function SettingsDialog() {
                   </label>
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { id: "light", label: "Light", bg: "bg-white" },
-                      { id: "dark", label: "Dark", bg: "bg-neutral-900" },
-                      { id: "system", label: "System", bg: "bg-gradient-to-r from-white to-neutral-900" },
-                    ].map((theme) => (
+                      { id: "light" as const, label: "Light", bg: "bg-white" },
+                      { id: "dark" as const, label: "Dark", bg: "bg-neutral-900" },
+                      { id: "system" as const, label: "System", bg: "bg-gradient-to-r from-white to-neutral-900" },
+                    ].map((themeOption) => (
                       <button
-                        key={theme.id}
-                        className="p-3 border border-[#333] rounded-lg hover:border-neutral-400 transition-colors"
+                        key={themeOption.id}
+                        onClick={() => setTheme(themeOption.id)}
+                        className={cn(
+                          "p-3 border rounded-lg hover:border-neutral-400 transition-colors",
+                          theme === themeOption.id ? "border-[#ccff00] ring-2 ring-[#ccff00]" : "border-[#333]"
+                        )}
                       >
                         <div
                           className={cn(
                             "h-16 rounded-md mb-2 border border-[#333]",
-                            theme.bg
+                            themeOption.bg
                           )}
                         />
-                        <span className="text-sm">{theme.label}</span>
+                        <span className="text-sm">{themeOption.label}</span>
+                        {theme === themeOption.id && (
+                          <div className="text-[#ccff00] text-xs mt-1">✓ Active</div>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -316,10 +357,14 @@ export function SettingsDialog() {
                       type="range"
                       min="12"
                       max="18"
-                      defaultValue="14"
-                      className="flex-1"
+                      value={textSize}
+                      onChange={(e) => setTextSize(parseInt(e.target.value))}
+                      className="flex-1 accent-[#ccff00]"
                     />
                     <span className="text-lg">A</span>
+                  </div>
+                  <div className="text-xs text-neutral-500 mt-2 text-center">
+                    Current size: {textSize}px
                   </div>
                 </div>
 
