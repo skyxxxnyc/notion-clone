@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Bot, Send, ChevronDown, Trash2, X, Plus, Sparkles } from "lucide-react";
+import { Bot, Send, ChevronDown, Trash2, X, Plus, Sparkles, Settings } from "lucide-react";
 import { useAgentStore } from "@/store/agentStore";
 import { agentChat } from "@/actions/ai";
 import type { AgentMessage } from "@/types/agent";
+import { AgentModeManager } from "./AgentModeManager";
 import "./agent-components.css";
 
 interface AgentPanelProps {
@@ -32,6 +33,7 @@ export function AgentPanel({ pageTitle, pageContent, selectedText }: AgentPanelP
 
     const [input, setInput] = useState("");
     const [showModeSelector, setShowModeSelector] = useState(false);
+    const [showModeManager, setShowModeManager] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -135,6 +137,13 @@ export function AgentPanel({ pageTitle, pageContent, selectedText }: AgentPanelP
                         disabled={messages.length === 0}
                     >
                         <Trash2 size={14} />
+                    </button>
+                    <button
+                        className="agent-icon-btn"
+                        onClick={() => setShowModeManager(true)}
+                        title="Manage modes"
+                    >
+                        <Settings size={14} />
                     </button>
                     <button className="agent-icon-btn" onClick={closePanel} title="Close">
                         <X size={14} />
@@ -247,6 +256,11 @@ export function AgentPanel({ pageTitle, pageContent, selectedText }: AgentPanelP
                     <Send size={16} />
                 </button>
             </div>
+
+            {/* Mode Manager Modal */}
+            {showModeManager && (
+                <AgentModeManager onClose={() => setShowModeManager(false)} />
+            )}
         </div>
     );
 }
